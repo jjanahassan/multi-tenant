@@ -16,21 +16,6 @@
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <!-- Top Bar with Logout (if logged in) -->
-            @auth
-                <div class="w-full max-w-lg mb-4 flex justify-between items-center">
-                    <span class="text-sm text-gray-600">
-                        Logged in as: {{ auth()->user()->name }}
-                    </span>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="text-sm text-red-600 hover:text-red-800">
-                            Log Out
-                        </button>
-                    </form>
-                </div>
-            @endauth
-
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
                 {{ $slot }}
             </div>

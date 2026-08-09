@@ -1,4 +1,4 @@
-<nav class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Left Side: Logo -->
@@ -8,7 +8,7 @@
                 </a>
             </div>
 
-            <!-- Right Side: Dropdown -->
+            <!-- Right Side: User Dropdown -->
             <div class="flex items-center space-x-4">
                 <!-- Company Name -->
                 <span class="text-sm text-gray-600">
@@ -26,9 +26,9 @@
 
                     <!-- Dropdown Menu -->
                     <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                        <!-- Switch Company (Scaffold) -->
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Switch Company (Coming Soon)
+                        <!-- Switch Company -->
+                        <a href="{{ route('switch-company') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Switch Company
                         </a>
 
                         <hr class="my-1">
