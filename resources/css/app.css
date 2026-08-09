@@ -1,43 +1,89 @@
-@import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../views';
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
-@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
-
-@custom-variant dark (&:where(.dark, .dark *));
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-
-    --color-zinc-50: #fafafa;
-    --color-zinc-100: #f5f5f5;
-    --color-zinc-200: #e5e5e5;
-    --color-zinc-300: #d4d4d4;
-    --color-zinc-400: #a3a3a3;
-    --color-zinc-500: #737373;
-    --color-zinc-600: #525252;
-    --color-zinc-700: #404040;
-    --color-zinc-800: #262626;
-    --color-zinc-900: #171717;
-    --color-zinc-950: #0a0a0a;
-
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+/* ===== FORCE ALL TEXT TO BE VISIBLE ===== */
+* {
+    color: #000000 !important;
 }
 
-@layer theme {
-    .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
-    }
+body {
+    background: #f3f4f6 !important;
+    color: #000000 !important;
 }
+
+h1, h2, h3, h4, h5, h6, p, span, div {
+    color: #000000 !important;
+}
+
+label {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+}
+
+input, textarea, select {
+    color: #000000 !important;
+    background: #ffffff !important;
+    border: 2px solid #d1d5db !important;
+    padding: 10px 12px !important;
+    margin: 5px 0 15px 0 !important;
+    width: 100% !important;
+    border-radius: 6px !important;
+    font-size: 16px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: 2px solid #4f46e5 !important;
+    border-color: #4f46e5 !important;
+}
+
+button, [type="submit"] {
+    color: #ffffff !important;
+    background: #4f46e5 !important;
+    padding: 12px 24px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    width: auto !important;
+    display: inline-block !important;
+}
+
+button:hover, [type="submit"]:hover {
+    background: #4338ca !important;
+}
+
+a {
+    color: #4f46e5 !important;
+    text-decoration: underline !important;
+}
+
+/* Form container */
+form {
+    background: #ffffff !important;
+    padding: 30px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+    max-width: 500px !important;
+    margin: 40px auto !important;
+}
+
+/* Error messages */
+.text-red-500, .text-red-600, .error, [class*="text-red"] {
+    color: #dc2626 !important;
+    font-size: 14px !important;
+    display: block !important;
+}
+
+/* ===== END FIX ===== */
 
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -47,20 +93,27 @@
     }
 }
 
-[data-flux-field]:not(ui-radio, ui-checkbox) {
-    @apply grid gap-2;
-}
+@layer components {
+    [data-flux-field]:not(ui-radio, ui-checkbox) {
+        display: grid;
+        gap: 0.5rem;
+    }
 
-[data-flux-label] {
-    @apply  !mb-0 !leading-tight;
-}
+    [data-flux-label] {
+        margin-bottom: 0 !important;
+        line-height: 1.25 !important;
+    }
 
-input:focus[data-flux-control],
-textarea:focus[data-flux-control],
-select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    input:focus[data-flux-control],
+    textarea:focus[data-flux-control],
+    select:focus[data-flux-control] {
+        outline: 2px solid transparent !important;
+        outline-offset: 2px !important;
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        --tw-ring-color: rgb(99 102 241 / 1);
+        --tw-ring-offset-width: 2px;
+        --tw-ring-offset-color: #fff;
+    }
 }
-
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
