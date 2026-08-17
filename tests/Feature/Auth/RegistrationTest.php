@@ -30,6 +30,7 @@ test('new users can register and are assigned to their own company', function ()
 
     expect($user)->not->toBeNull();
     expect($user->company_id)->not->toBeNull();
+    expect($user->role)->toBe('owner');
 
     $company= Company::find($user->company_id);
 
@@ -62,5 +63,6 @@ test('different users are assigned to different companies', function () {
     $secondUser= User::where('email', 'user2@example.com')->first();
 
     expect($secondUser)->not->toBeNull();
+    expect($secondUser->role)->toBe('owner');
     expect($firstUser->company_id)->not->toBe($secondUser->company_id);
 });

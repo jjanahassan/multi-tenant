@@ -38,6 +38,7 @@ class CreateNewUser implements CreatesNewUsers
                 'email' => $input['email'],
                 'password' => $input['password'],
                 'company_id' => $company->id,
+                'role'=> 'owner',
             ]);
 
             $company->owner_id= $user->id;
@@ -48,3 +49,4 @@ class CreateNewUser implements CreatesNewUsers
         
     }
 }
+ 
