@@ -27,9 +27,15 @@
                     <!-- Dropdown Menu -->
                     <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                         <!-- Switch Company -->
-                        <a href="{{ route('switch-company') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Switch Company
-                        </a>
+                        <x-nav-link :href="route('switch-company')" :active="request()->routeIs('switch-company')">
+                            {{ __('Switch Company') }}
+                        </x-nav-link>
+
+                        @can('invite', auth()->user()->company)
+                            <x-nav-link :href="route('invitations.create')" :active="request()->routeIs('invitations.*')">
+                                {{ __('Invite Teammate') }}
+                            </x-nav-link>
+                        @endcan
 
                         <hr class="my-1">
 

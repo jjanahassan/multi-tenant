@@ -31,4 +31,9 @@ class Company extends Model
     {
         return $this->HasMany(Project::class);
     }
+
+    public function invitations(): HasMany
+    {
+        return $this-> HasMany(Invitation::class);
+    }
 }
