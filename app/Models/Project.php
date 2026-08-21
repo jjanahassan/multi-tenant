@@ -12,7 +12,7 @@ class Project extends Model
 {
     use HasFactory, CompanyScoped;
 
-    protected $fillable=['name', 'company_id', description,];
+    protected $fillable=['name', 'company_id', 'description',];
 
     public function company(): BelongsTo {
         return $this->belongsTo(Company::class);

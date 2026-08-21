@@ -37,6 +37,13 @@
                             </x-nav-link>
                         @endcan
 
+                        <x-nav-link
+                            :href="route('projects.index')"
+                            :active="request()->routeIs('projects.*')"
+                        >
+                            {{ __('Projects') }}
+                        </x-nav-link>
+
                         <hr class="my-1">
 
                         <!-- Logout -->
