@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\ProjectController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -20,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::resource('projects', ProjectController::class);
+    
     Route::get('/invitations/create', [InvitationController::class, 'create'])
         ->name('invitations.create');
 
