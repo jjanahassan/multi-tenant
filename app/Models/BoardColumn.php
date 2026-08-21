@@ -10,7 +10,7 @@ class BoardColumn extends Model
 {
     use HasFactory;
 
-    protected $fillable= ['project_id', 'name', 'description',];
+    protected $fillable= ['project_id', 'name', 'position',];
 
     public function project(): BelongsTo{
         return $this->belongsTo(Project::class);

@@ -44,6 +44,11 @@ Route::middleware('auth')->group(function () {
         '/projects/{project}/columns/{boardColumn}',
         [BoardColumnController::class, 'destroy']
     )->name('projects.columns.destroy');
+
+    Route::patch(
+        '/projects/{project}/columns/{boardColumn}/reorder/{direction}',
+        [BoardColumnController::class, 'reorder']
+    )->name('projects.columns.reorder');
 });
 
 require __DIR__.'/settings.php';

@@ -91,6 +91,7 @@
 
             <div class="border rounded p-4 min-w-56">
 
+                {{-- Rename column --}}
                 <form
                     method="POST"
                     action="{{ route('projects.columns.update', [$project, $column]) }}"
@@ -113,6 +114,7 @@
                     </button>
                 </form>
 
+                {{-- Delete column --}}
                 <form
                     method="POST"
                     action="{{ route('projects.columns.destroy', [$project, $column]) }}"
@@ -128,6 +130,49 @@
                         Delete
                     </button>
                 </form>
+
+                {{-- Reorder buttons --}}
+                <div class="flex gap-2 mt-3">
+
+                    <form
+                        method="POST"
+                        action="{{ route('projects.columns.reorder', [
+                            'project' => $project,
+                            'boardColumn' => $column,
+                            'direction' => 'left',
+                        ]) }}"
+                    >
+                        @csrf
+                        @method('PATCH')
+
+                        <button
+                            type="submit"
+                            class="px-2 py-1 border rounded"
+                        >
+                            ←
+                        </button>
+                    </form>
+
+                    <form
+                        method="POST"
+                        action="{{ route('projects.columns.reorder', [
+                            'project' => $project,
+                            'boardColumn' => $column,
+                            'direction' => 'right',
+                        ]) }}"
+                    >
+                        @csrf
+                        @method('PATCH')
+
+                        <button
+                            type="submit"
+                            class="px-2 py-1 border rounded"
+                        >
+                            →
+                        </button>
+                    </form>
+
+                </div>
 
             </div>
 

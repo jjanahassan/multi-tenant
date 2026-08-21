@@ -32,4 +32,33 @@ class BoardColumnController extends Controller
 
         return back()-> with('success', 'Board column deleted successfully');
     }
+
+    public function reorder(Project $project, BoardColumn $boardColumn, string $direction) {
+        abort_unless($boardColumn->project_id === $project->id, 404);
+
+        $columns = $project->boardColumns()->orderBy('position')->get()->values();
+        $currentIndex = $columns->search(fn ($column) => $column->id === $boardColumn->id);
+
+        if ($currentIndex === false) {
+            abort(404);
+        }
+
+        if ($direction === 'left' && $currentIndex > 0) {
+            $otherColumn = $columns->get($currentIndex - 1);
+            $this->swapPositions($boardColumn, $otherColumn);
+        }
+
+        if ($direction === 'right' && $currentIndex < $columns->count() - 1) {
+            $otherColumn = $columns->get($currentIndex + 1);
+            $this->swapPositions($boardColumn, $otherColumn);
+        }
+
+        return back()->with('success','Board column reordered successfully.');
+    }
+
+    private function swapPositions(BoardColumn $first, BoardColumn $second): void{
+        $temp= $first->position;
+        $first->update(['position'=> $second->position,]);
+        $second->update(['position'=>$temp,]);
+    }
 }
