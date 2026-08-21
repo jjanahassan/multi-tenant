@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\BoardColumnController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -22,12 +23,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::resource('projects', ProjectController::class);
-    
+
     Route::get('/invitations/create', [InvitationController::class, 'create'])
         ->name('invitations.create');
 
     Route::post('/invitations', [InvitationController::class, 'store'])
         ->name('invitations.store');
+
+    Route::post(
+        '/projects/{project}/columns',
+        [BoardColumnController::class, 'store']
+    )->name('projects.columns.store');
+
+    Route::put(
+        '/projects/{project}/columns/{boardColumn}',
+        [BoardColumnController::class, 'update']
+    )->name('projects.columns.update');
+
+    Route::delete(
+        '/projects/{project}/columns/{boardColumn}',
+        [BoardColumnController::class, 'destroy']
+    )->name('projects.columns.destroy');
 });
 
 require __DIR__.'/settings.php';
