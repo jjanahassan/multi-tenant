@@ -136,3 +136,40 @@ test('user can reorder board columns', function () {
     expect($todo->fresh()->position)->toBe(2);
     expect($progress->fresh()->position)->toBe(1);
 });
+
+test('user cannot query board columns from another company', function () {
+    $companyA = Company::factory()->create();
+    $companyB = Company::factory()->create();
+
+    $userA = User::factory()->create([
+        'company_id' => $companyA->id,
+    ]);
+
+    $projectA = Project::factory()->create([
+        'company_id' => $companyA->id,
+    ]);
+
+    $projectB = Project::factory()->create([
+        'company_id' => $companyB->id,
+    ]);
+
+    $columnA = BoardColumn::factory()->create([
+        'project_id' => $projectA->id,
+    ]);
+
+    $columnB = BoardColumn::factory()->create([
+        'project_id' => $projectB->id,
+    ]);
+
+    $this->actingAs($userA);
+
+    $columns = BoardColumn::all();
+
+    $this->assertTrue(
+        $columns->contains('id', $columnA->id)
+    );
+
+    $this->assertFalse(
+        $columns->contains('id', $columnB->id)
+    );
+});
