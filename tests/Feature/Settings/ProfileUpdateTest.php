@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Company;
 use Livewire\Livewire;
 
 test('profile page is displayed', function () {
@@ -72,4 +73,34 @@ test('correct password must be provided to delete account', function () {
     $response->assertHasErrors(['password']);
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('company owner cannot delete their account', function() {
+    $company = Company::factory()->create();
+
+    $owner = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $company->update([
+        'owner_id' => $owner->id,
+    ]);
+
+    $response = $this
+        ->actingAs($owner)
+        ->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ]);
+
+    $response->assertSessionHasErrors('userDeletion');
+
+    $this->assertDatabaseHas('users', [
+        'id' => $owner->id,
+    ]);
+
+    $this->assertDatabaseHas('companies', [
+        'id' => $company->id,
+        'owner_id' => $owner->id,
+    ]);
 });

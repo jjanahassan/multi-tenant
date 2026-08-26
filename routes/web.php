@@ -5,6 +5,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BoardColumnController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ProfileController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -65,6 +66,10 @@ Route::middleware('auth')->group(function () {
         '/company/{company}',
         [CompanyController::class, 'destroy']
     )->name('company.destroy');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->middleware('auth')
+        ->name('profile.destroy');
 });
 
 require __DIR__.'/settings.php';
