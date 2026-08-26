@@ -49,8 +49,9 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if ($user->company && $user->company->owner_id === $user->id) {
-        return Redirect::route('profile.edit')
-            ->withErrors(['password' => 'You cannot delete your account because you are the owner of this company.', ], 'userDeletion');
+            return back()->withErrors([
+                'userDeletion' => 'Company owners cannot delete their account. Delete the company first.',
+            ]);
         }
 
         Auth::logout();
