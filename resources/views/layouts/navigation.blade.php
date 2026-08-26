@@ -37,6 +37,17 @@
                             </x-nav-link>
                         @endcan
 
+                        @can('removeUser', auth()->user()->company)
+
+                            <x-nav-link
+                                :href="route('company.users')"
+                                :active="request()->routeIs('company.users')"
+                            >
+                                {{ __('Manage Teammates') }}
+                            </x-nav-link>
+
+                        @endcan
+
                         <x-nav-link
                             :href="route('projects.index')"
                             :active="request()->routeIs('projects.*')"

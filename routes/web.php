@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BoardColumnController;
+use App\Http\Controllers\CompanyController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -49,6 +50,21 @@ Route::middleware('auth')->group(function () {
         '/projects/{project}/columns/{boardColumn}/reorder/{direction}',
         [BoardColumnController::class, 'reorder']
     )->name('projects.columns.reorder');
+
+    Route::get(
+        '/company/users',
+        [CompanyController::class, 'users']
+    )->name('company.users');
+
+    Route::delete(
+        '/company/{company}/users/{user}',
+        [CompanyController::class, 'removeUser']
+    )->name('company.users.destroy');
+
+    Route::delete(
+        '/company/{company}',
+        [CompanyController::class, 'destroy']
+    )->name('company.destroy');
 });
 
 require __DIR__.'/settings.php';
