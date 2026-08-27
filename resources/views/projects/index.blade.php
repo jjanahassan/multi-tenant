@@ -4,12 +4,14 @@
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold">Projects</h1>
 
-            <a
-                href="{{ route('projects.create') }}"
-                class="px-4 py-2 bg-black text-white rounded"
-            >
-                Create Project
-            </a>
+            @can('create', App\Models\Project::class)
+                <a
+                    href="{{ route('projects.create') }}"
+                    class="px-4 py-2 bg-black text-white rounded"
+                >
+                    Create Project
+                </a>
+            @endcan
         </div>
 
         @if (session('success'))

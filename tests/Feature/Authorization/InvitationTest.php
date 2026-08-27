@@ -153,3 +153,33 @@ test('invitation always belongs to the authenticated users company', function ()
     expect($invitation->company_id)->toBe($companyA->id);
     expect($invitation->company_id)->not->toBe($companyB->id);
 });
+
+test('user can only query invitations from their company', function () {
+     $companyA = Company::factory()->create();
+    $companyB = Company::factory()->create();
+
+    $userA = User::factory()->create([
+        'company_id' => $companyA->id,
+        'role' => 'owner',
+    ]);
+
+    $invitationA = Invitation::factory()->create([
+        'company_id' => $companyA->id,
+    ]);
+
+    $invitationB = Invitation::factory()->create([
+        'company_id' => $companyB->id,
+    ]);
+
+    $this->actingAs($userA);
+
+    $invitations = Invitation::all();
+
+     $this->assertTrue(
+        $invitations->contains('id', $invitationA->id)
+    );
+
+    $this->assertFalse(
+        $invitations->contains('id', $invitationB->id)
+    );
+});

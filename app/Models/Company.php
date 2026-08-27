@@ -29,11 +29,11 @@ class Company extends Model
 
     public function projects(): HasMany
     {
-        return $this->HasMany(Project::class);
+        return $this->hasMany(Project::class);
     }
 
     public function invitations(): HasMany
     {
-        return $this-> HasMany(Invitation::class);
+        return $this->hasMany(Invitation::class);
     }
 }
