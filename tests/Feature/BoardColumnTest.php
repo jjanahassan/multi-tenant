@@ -10,6 +10,7 @@ test('user can add a board column', function () {
 
     $user = User::factory()->create([
         'company_id' => $company->id,
+        'role' => 'admin',
     ]);
 
     $project = Project::factory()->create([
@@ -38,6 +39,7 @@ test('user can rename a board column', function () {
 
     $user = User::factory()->create([
         'company_id' => $company->id,
+        'role' => 'admin',
     ]);
 
     $project = Project::factory()->create([
@@ -74,6 +76,7 @@ test('user can delete a board column', function () {
 
     $user = User::factory()->create([
         'company_id' => $company->id,
+        'role' => 'admin',
     ]);
 
     $project = Project::factory()->create([
@@ -105,6 +108,7 @@ test('user can reorder board columns', function () {
 
     $user = User::factory()->create([
         'company_id' => $company->id,
+        'role' => 'admin',
     ]);
 
     $project = Project::factory()->create([
@@ -172,4 +176,40 @@ test('user cannot query board columns from another company', function () {
     $this->assertFalse(
         $columns->contains('id', $columnB->id)
     );
+});
+
+test('user cannot update a board column through another project', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'admin',
+    ]);
+
+    $projectOne = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $projectTwo = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $projectTwo->boardColumns()->create([
+        'name' => 'To Do',
+        'position' => 0,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->put(
+            route('projects.columns.update', [
+                'project' => $projectOne,
+                'boardColumn' => $column,
+            ]),
+            [
+                'name' => 'Updated',
+            ]
+        );
+
+    $response->assertNotFound();
 });

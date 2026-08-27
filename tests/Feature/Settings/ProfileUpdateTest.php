@@ -75,7 +75,7 @@ test('correct password must be provided to delete account', function () {
     expect($user->fresh())->not->toBeNull();
 });
 
-test('company owner cannot delete their account', function() {
+test('company owner cannot delete their account', function () {
     $company = Company::factory()->create();
 
     $owner = User::factory()->create([
@@ -87,20 +87,15 @@ test('company owner cannot delete their account', function() {
         'owner_id' => $owner->id,
     ]);
 
-    $response = $this
-        ->actingAs($owner)
-        ->delete(route('profile.destroy'), [
-            'password' => 'password',
-        ]);
+    $this->actingAs($owner);
 
-    $response->assertSessionHasErrors('userDeletion');
+    $response = Livewire::test('pages::settings.delete-user-modal')
+        ->set('password', 'password')
+        ->call('deleteUser');
 
-    $this->assertDatabaseHas('users', [
-        'id' => $owner->id,
-    ]);
+    $response->assertHasErrors(['password']);
 
-    $this->assertDatabaseHas('companies', [
-        'id' => $company->id,
-        'owner_id' => $owner->id,
-    ]);
+    expect($owner->fresh())->not->toBeNull();
+
+    expect($company->fresh()->owner_id)->toBe($owner->id);
 });

@@ -23,7 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('switch-company.switch');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware('auth')->scopeBindings()->group(function () {
     Route::resource('projects', ProjectController::class);
 
     Route::get('/invitations/create', [InvitationController::class, 'create'])
@@ -67,9 +67,7 @@ Route::middleware('auth')->group(function () {
         [CompanyController::class, 'destroy']
     )->name('company.destroy');
 
-    Route::delete('/profile', [ProfileController::class, 'destroy'])
-        ->middleware('auth')
-        ->name('profile.destroy');
+    
 });
 
 require __DIR__.'/settings.php';
