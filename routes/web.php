@@ -18,7 +18,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('switch-company');
 
     Route::post('/switch-company', function () {
-        // Scaffold: actual switching will be implemented in Task 2
         return back()->with('info', 'Switch Company feature is coming soon!');
     })->name('switch-company.switch');
 });
