@@ -4,13 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CompanyScoped;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
     /** @use HasFactory<\Database\Factories\TaskFactory> */
-    use HasFactory, CompanyScoped;
+    use HasFactory;
 
     protected $fillable=['project_id', 'board_column_id', 'assignee_id', 'title', 'description', 'due_date', 'position', ];
 
