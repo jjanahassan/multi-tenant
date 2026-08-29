@@ -12,6 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -60,5 +61,9 @@ class User extends Authenticatable
 
     public function company(): BelongsTo{
         return $this->belongsTo(Company::class);
+    }
+
+    public function assignedTasks(): HasMany{
+        return $this->hasMany(Task::class, 'assignee_id');
     }
 }

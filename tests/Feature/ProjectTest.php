@@ -6,7 +6,7 @@ use App\Models\User;
 
 test('authenticated user can create a project', function () {
     $company = Company::factory()->create();
-    $user = User::factory()->create(['company_id' => $company->id,]);
+    $user = User::factory()->create(['company_id' => $company->id, 'role' => 'admin',]);
     $response = $this
         ->actingAs($user)
         ->post(route('projects.store'), [
@@ -24,7 +24,7 @@ test('authenticated user can create a project', function () {
 
 test('authenticated user can update a project', function () {
     $company = Company::factory()->create();
-    $user = User::factory()->create(['company_id' => $company->id,]);
+    $user = User::factory()->create(['company_id' => $company->id, 'role' => 'admin',]);
     $project = Project::factory()->create([
         'company_id' => $company->id,
         'name' => 'Old Name',
@@ -47,7 +47,7 @@ test('authenticated user can update a project', function () {
 
 test('authenticated user can delete a project', function () {
     $company = Company::factory()->create();
-    $user = User::factory()->create(['company_id' => $company->id,]);
+    $user = User::factory()->create(['company_id' => $company->id, 'role' => 'admin',]);
     $project = Project::factory()->create(['company_id' => $company->id,]);
 
     $response = $this
@@ -65,7 +65,7 @@ test('authenticated user can delete a project', function () {
 
 test('project requires a name', function () {
     $company = Company::factory()->create();
-    $user = User::factory()->create(['company_id' => $company->id,]);
+    $user = User::factory()->create(['company_id' => $company->id, 'role' => 'admin',]);
 
     $response = $this
         ->actingAs($user)

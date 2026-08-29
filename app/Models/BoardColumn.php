@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BoardColumn extends Model
 {
@@ -30,5 +31,9 @@ class BoardColumn extends Model
     
     public function project(): BelongsTo{
         return $this->belongsTo(Project::class);
+    }
+
+    public function tasks(): HasMany{
+        return $this->hasMany(Task::class);
     }
 }
