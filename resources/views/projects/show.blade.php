@@ -1,198 +1,108 @@
-<x-layouts.app :title="$project->name">
-    <div class="p-6">
+<x-layouts.app>
+    <div class="flex flex-col gap-6 p-6">
 
-        @if (session('success'))
-            <div class="mb-4 p-4 bg-green-100 rounded">
-                {{ session('success') }}
+        {{-- Project Header --}}
+        <div class="flex items-center justify-between">
+            <div>
+                <flux:heading size="xl">
+                    {{ $project->name }}
+                </flux:heading>
+
+                @if ($project->description)
+                    <flux:text class="mt-1">
+                        {{ $project->description }}
+                    </flux:text>
+                @endif
             </div>
-        @endif
 
-        <div class="flex items-start justify-between mb-6">
-
-    <div>
-        <h1 class="text-2xl font-bold">
-            {{ $project->name }}
-        </h1>
-
-        @if ($project->description)
-            <p class="text-gray-600">
-                {{ $project->description }}
-            </p>
-        @endif
-    </div>
-
-    <div class="flex items-center gap-2 shrink-0">
-
-         @can('update', $project)
-            <a
-                href="{{ route('projects.edit', $project) }}"
-                class="inline-flex items-center px-4 py-2 border rounded"
-            >
-                Edit
+            <a href="{{ route('projects.index') }}">
+                <flux:button variant="ghost">
+                    Back to Projects
+                </flux:button>
             </a>
-        @endcan
+        </div>
 
-        @can('delete', $project)
-            <form
-                method="POST"
-                action="{{ route('projects.destroy', $project) }}"
-                class="inline-flex m-0 p-0"
-            >
-                @csrf
-                @method('DELETE')
+        {{-- Kanban Board --}}
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 
-                <button
-                    type="submit"
-                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded"
-                >
-                    Delete
-                </button>
-            </form>
-        @endcan
+            @foreach ($project->boardColumns as $column)
 
-    </div>
+                <div class="rounded-xl bg-zinc-100 p-4">
 
-</div>
+                    {{-- Column Header --}}
+                    <div class="mb-4 flex items-center justify-between">
+                        <flux:heading size="lg">
+                            {{ $column->name }}
+                        </flux:heading>
 
-        <div class="mt-8">
+                        <flux:text>
+                            {{ $column->tasks->count() }}
+                        </flux:text>
+                    </div>
 
-    <h2 class="text-xl font-semibold mb-4">
-        Board Columns
-    </h2>
+                    {{-- Tasks --}}
+                    <div class="flex flex-col gap-3">
 
-    @can('update', $project)
-        <form
-            method="POST"
-            action="{{ route('projects.columns.store', $project) }}"
-            class="flex gap-2 mb-6"
-        >
-            @csrf
+                        @forelse ($column->tasks->sortBy('position') as $task)
 
-            <input
-                type="text"
-                name="name"
-                placeholder="Column name"
-                value="{{ old('name') }}"
-                class="border rounded p-2"
-            >
+                            <div class="rounded-lg bg-white p-4 shadow-sm">
 
-            <button
-                type="submit"
-                class="px-4 py-2 bg-black text-white rounded"
-            >
-                Add Column
-            </button>
-        </form>
+                                {{-- Task Title --}}
+                                <flux:heading size="sm">
+                                    {{ $task->title }}
+                                </flux:heading>
 
-        @error('name')
-            <p class="text-red-500 text-sm mb-4">
-                {{ $message }}
-            </p>
-        @enderror
+                                {{-- Description --}}
+                                @if ($task->description)
+                                    <flux:text class="mt-2 text-sm">
+                                        {{ $task->description }}
+                                    </flux:text>
+                                @endif
 
-        <div class="flex gap-4">
+                                {{-- Task Details --}}
+                                <div class="mt-4 flex flex-col gap-2">
 
-            @forelse ($project->boardColumns as $column)
+                                    @if ($task->assignee)
+                                        <flux:text class="text-sm">
+                                            Assigned to:
+                                            <strong>
+                                                {{ $task->assignee->name }}
+                                            </strong>
+                                        </flux:text>
+                                    @else
+                                        <flux:text class="text-sm">
+                                            Unassigned
+                                        </flux:text>
+                                    @endif
 
-                <div class="border rounded p-4 min-w-56">
+                                    @if ($task->due_date)
+                                        <flux:text class="text-sm">
+                                            Due:
+                                            {{ $task->due_date->format('M d, Y') }}
+                                        </flux:text>
+                                    @endif
 
-                    {{-- Rename column --}}
-                    <form
-                        method="POST"
-                        action="{{ route('projects.columns.update', [$project, $column]) }}"
-                    >
-                        @csrf
-                        @method('PUT')
+                                </div>
 
-                        <input
-                            type="text"
-                            name="name"
-                            value="{{ $column->name }}"
-                            class="border rounded p-2 w-full"
-                        >
+                            </div>
 
-                        <button
-                            type="submit"
-                            class="mt-2 px-3 py-1 border rounded"
-                        >
-                            Rename
-                        </button>
-                    </form>
+                        @empty
 
-                    {{-- Delete column --}}
-                    <form
-                        method="POST"
-                        action="{{ route('projects.columns.destroy', [$project, $column]) }}"
-                        class="mt-2"
-                    >
-                        @csrf
-                        @method('DELETE')
+                            <div class="rounded-lg border border-dashed p-4 text-center">
+                                <flux:text>
+                                    No tasks yet.
+                                </flux:text>
+                            </div>
 
-                        <button
-                            type="submit"
-                            class="text-red-600"
-                        >
-                            Delete
-                        </button>
-                    </form>
-
-                    {{-- Reorder buttons --}}
-                    <div class="flex gap-2 mt-3">
-
-                        <form
-                            method="POST"
-                            action="{{ route('projects.columns.reorder', [
-                                'project' => $project,
-                                'boardColumn' => $column,
-                                'direction' => 'left',
-                            ]) }}"
-                        >
-                            @csrf
-                            @method('PATCH')
-
-                            <button
-                                type="submit"
-                                class="px-2 py-1 border rounded"
-                            >
-                                ←
-                            </button>
-                        </form>
-
-                        <form
-                            method="POST"
-                            action="{{ route('projects.columns.reorder', [
-                                'project' => $project,
-                                'boardColumn' => $column,
-                                'direction' => 'right',
-                            ]) }}"
-                        >
-                            @csrf
-                            @method('PATCH')
-
-                            <button
-                                type="submit"
-                                class="px-2 py-1 border rounded"
-                            >
-                                →
-                            </button>
-                        </form>
+                        @endforelse
 
                     </div>
 
                 </div>
 
-            @empty
-
-                <p class="text-gray-500">
-                    No board columns yet.
-                </p>
-
-            @endforelse
+            @endforeach
 
         </div>
-    @endcan
-
-</div>
 
     </div>
 </x-layouts.app>

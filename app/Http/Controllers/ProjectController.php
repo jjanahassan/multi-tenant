@@ -56,7 +56,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load('boardColumns');
+        $project->load(['boardColumns.tasks.assignee', ]);
 
         return view('projects.show', compact('project'));
     }
