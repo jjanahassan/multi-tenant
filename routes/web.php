@@ -81,6 +81,11 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         '/projects/{project}/tasks/{task}',
         [TaskController::class, 'destroy']
     )->name('projects.tasks.destroy');
+
+    Route::patch(
+        '/projects/{project}/tasks/{task}/move',
+        [TaskController::class, 'move']
+    )->name('projects.tasks.move');
     
 });
 

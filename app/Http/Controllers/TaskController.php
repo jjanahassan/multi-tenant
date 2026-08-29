@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Http\Requests\MoveTaskRequest;
 
 class TaskController extends Controller
 {
@@ -51,5 +52,21 @@ class TaskController extends Controller
         $task->delete();
 
         return back()-> with('success', 'Task deleted successfully.');
+    }
+
+    public function move(MoveTaskRequest $request, Project $project, Task $task) {
+        abort_unless($task->project_id === $project->id, 404);
+
+        $validated = $request->validated();
+
+        $task->update([
+            'board_column_id' => $validated['board_column_id'],
+            'position' => $validated['position'],
+        ]);
+
+        return response()->json([
+            'message' => 'Task moved successfully.',
+            'task' => $task->fresh(),
+        ]);
     }
 }
