@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\User;
 
 class ProjectController extends Controller
 {
@@ -57,8 +58,9 @@ class ProjectController extends Controller
         $this->authorize('view', $project);
 
         $project->load(['boardColumns.tasks.assignee', ]);
+        $users = User::where('company_id', $project->company_id)->orderBy('name')->get();
 
-        return view('projects.show', compact('project'));
+        return view('projects.show', compact('project', 'users'));
     }
 
     /**
