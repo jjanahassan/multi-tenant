@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
@@ -53,14 +54,27 @@ class ProjectController extends Controller
     /**
      * Display the specified project.
      */
-    public function show(Project $project)
+    public function show(Request $request, Project $project)
     {
-        $this->authorize('view', $project);
+        $users = $project->company->users;
 
-        $project->load(['boardColumns.tasks.assignee', ]);
-        $users = User::where('company_id', $project->company_id)->orderBy('name')->get();
+        $assigneeId = $request->input('assignee_id');
 
-        return view('projects.show', compact('project', 'users'));
+        $project->load([
+            'boardColumns.tasks' => function ($query) use ($assigneeId) {
+                if ($assigneeId) {
+                    $query->where('assignee_id', $assigneeId);
+                }
+
+                $query->orderBy('position');
+            },
+        ]);
+
+        return view('projects.show', compact(
+            'project',
+            'users',
+            'assigneeId'
+        ));
     }
 
     /**

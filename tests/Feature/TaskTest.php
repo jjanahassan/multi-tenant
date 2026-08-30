@@ -279,3 +279,49 @@ test('user cannot update a task through another project', function () {
 
     $response->assertNotFound();
 });
+
+test('user can filter tasks by assignee', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $assigneeOne = User::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $assigneeTwo = User::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()->first();
+
+    $taskOne = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'assignee_id' => $assigneeOne->id,
+    ]);
+
+    $taskTwo = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'assignee_id' => $assigneeTwo->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'assignee_id' => $assigneeOne->id,
+        ]));
+
+    $response->assertOk();
+
+    $response->assertSee($taskOne->title);
+    $response->assertDontSee($taskTwo->title);
+});

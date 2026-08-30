@@ -103,6 +103,53 @@
             @enderror
 
 
+            {{-- Task Filters --}}
+                <div class="mb-6 flex items-center gap-3">
+
+                    <label
+                        for="assignee_id"
+                        class="font-medium"
+                    >
+                        Filter by assignee:
+                    </label>
+
+                    <form
+                        method="GET"
+                        action="{{ route('projects.show', $project) }}"
+                    >
+                        <select
+                            name="assignee_id"
+                            id="assignee_id"
+                            onchange="this.form.submit()"
+                            class="border rounded px-3 py-2"
+                        >
+                            <option value="">
+                                All Assignees
+                            </option>
+
+                            @foreach ($users as $user)
+                                <option
+                                    value="{{ $user->id }}"
+                                    @selected($assigneeId == $user->id)
+                                >
+                                    {{ $user->name }}
+                                </option>
+                            @endforeach
+
+                        </select>
+                    </form>
+
+                    @if ($assigneeId)
+                        <a
+                            href="{{ route('projects.show', $project) }}"
+                            class="px-3 py-2 border rounded"
+                        >
+                            Clear Filter
+                        </a>
+                    @endif
+
+                </div>
+                
             {{-- Kanban Board --}}
             <div class="flex gap-4 overflow-x-auto pb-4">
 
@@ -252,7 +299,7 @@
                             data-column-id="{{ $column->id }}"
                         >
 
-                            @forelse ($column->tasks->sortBy('position') as $task)
+                            @forelse ($column->tasks as $task)
 
                                 <div
                                     class="task-card border rounded-lg p-4 mb-3 bg-white shadow-sm cursor-move"
