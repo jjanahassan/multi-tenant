@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateBoardColumnRequest;
 use App\Models\BoardColumn;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 
 class BoardColumnController extends Controller
 {
@@ -61,15 +62,11 @@ class BoardColumnController extends Controller
         BoardColumn $boardColumn,
         string $direction
     ) {
+        abort_unless($boardColumn->project_id === $project->id, 404);
+
         $this->authorize('update', $project);
 
-        abort_unless(
-            in_array($direction, ['left', 'right']),
-            422
-        );
-
-        $columns = $project
-            ->boardColumns()
+        $columns = $project->boardColumns()
             ->orderBy('position')
             ->get()
             ->values();
@@ -78,13 +75,14 @@ class BoardColumnController extends Controller
             fn ($column) => $column->id === $boardColumn->id
         );
 
+        if ($currentIndex === false) {
+            abort(404);
+        }
+
         if ($direction === 'left' && $currentIndex > 0) {
             $otherColumn = $columns->get($currentIndex - 1);
 
-            $this->swapPositions(
-                $boardColumn,
-                $otherColumn
-            );
+            $this->swapPositions($boardColumn, $otherColumn);
         }
 
         if (
@@ -93,10 +91,7 @@ class BoardColumnController extends Controller
         ) {
             $otherColumn = $columns->get($currentIndex + 1);
 
-            $this->swapPositions(
-                $boardColumn,
-                $otherColumn
-            );
+            $this->swapPositions($boardColumn, $otherColumn);
         }
 
         return back()->with(
@@ -109,14 +104,30 @@ class BoardColumnController extends Controller
         BoardColumn $first,
         BoardColumn $second
     ): void {
-        $temp = $first->position;
+        DB::transaction(function () use ($first, $second) {
+            $firstPosition = $first->position;
+            $secondPosition = $second->position;
 
-        $first->update([
-            'position' => $second->position,
-        ]);
+            DB::table('board_columns')
+                ->where('id', $first->id)
+                ->update([
+                    'position' => -1,
+                    'updated_at' => now(),
+                ]);
 
-        $second->update([
-            'position' => $temp,
-        ]);
+            DB::table('board_columns')
+                ->where('id', $second->id)
+                ->update([
+                    'position' => $firstPosition,
+                    'updated_at' => now(),
+                ]);
+
+            DB::table('board_columns')
+                ->where('id', $first->id)
+                ->update([
+                    'position' => $secondPosition,
+                    'updated_at' => now(),
+                ]);
+        });
     }
 }

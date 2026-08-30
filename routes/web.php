@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BoardColumnController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TaskController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -66,6 +67,25 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         [CompanyController::class, 'destroy']
     )->name('company.destroy');
 
+    Route::post(
+        '/projects/{project}/tasks',
+        [TaskController::class, 'store']
+    )->name('projects.tasks.store');
+
+    Route::put(
+        '/projects/{project}/tasks/{task}',
+        [TaskController::class, 'update']
+    )->name('projects.tasks.update');
+
+    Route::delete(
+        '/projects/{project}/tasks/{task}',
+        [TaskController::class, 'destroy']
+    )->name('projects.tasks.destroy');
+
+    Route::patch(
+        '/projects/{project}/tasks/{task}/move',
+        [TaskController::class, 'move']
+    )->name('projects.tasks.move');
     
 });
 

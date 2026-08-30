@@ -6,6 +6,8 @@ use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
@@ -52,23 +54,63 @@ class ProjectController extends Controller
     /**
      * Display the specified project.
      */
-    public function show(Project $project)
+
+public function show(Request $request, Project $project)
     {
-        $this->authorize('view', $project);
+        $users = $project->company->users;
 
-        $project->load('boardColumns');
+        $assigneeId = $request->input('assignee_id');
+        $dueDate = $request->input('due_date');
+        $sortDueDate = $request->input('sort_due_date');
 
-        return view('projects.show', compact('project'));
-    }
+        $project->load([
+            'boardColumns.tasks' => function ($query) use (
+                $assigneeId,
+                $dueDate,
+                $sortDueDate
+            ) {
 
-    /**
-     * Show the form for editing a project.
-     */
-    public function edit(Project $project)
-    {
-        $this->authorize('update', $project);
+                /*
+                * Filter by assignee
+                */
+                if ($assigneeId) {
+                    $query->where('assignee_id', $assigneeId);
+                }
 
-        return view('projects.edit', compact('project'));
+                /*
+                * Filter by exact due date
+                */
+                if ($dueDate) {
+                    $query->whereDate('due_date', $dueDate);
+                }
+
+                /*
+                * Sort by due date
+                */
+                if ($sortDueDate === 'asc') {
+                    $query->orderByRaw(
+                        'due_date IS NULL, due_date ASC'
+                    );
+                } elseif ($sortDueDate === 'desc') {
+                    $query->orderByRaw(
+                        'due_date IS NULL, due_date DESC'
+                    );
+                }
+
+                /*
+                * Always use position as the secondary ordering.
+                */
+                $query->orderBy('position');
+            },
+        ]);
+
+        return view('projects.show', compact(
+            'project',
+            'users',
+            'assigneeId',
+            'dueDate',
+            'sortDueDate'
+        ));
     }
 
     /**
