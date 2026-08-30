@@ -424,27 +424,36 @@
         const taskCards = document.querySelectorAll('.task-card');
         const taskLists = document.querySelectorAll('.task-list');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Drag Start
+        |--------------------------------------------------------------------------
+        */
+
         taskCards.forEach(card => {
 
             card.addEventListener('dragstart', () => {
-
                 draggedTask = card;
                 sourceList = card.parentElement;
 
                 card.classList.add('opacity-50');
-
             });
 
             card.addEventListener('dragend', () => {
-
                 card.classList.remove('opacity-50');
 
                 draggedTask = null;
                 sourceList = null;
-
             });
 
         });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Allow Drop
+        |--------------------------------------------------------------------------
+        */
 
         taskLists.forEach(list => {
 
@@ -452,7 +461,14 @@
                 event.preventDefault();
             });
 
-            list.addEventListener('drop', event => {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Drop
+            |--------------------------------------------------------------------------
+            */
+
+            list.addEventListener('drop', async event => {
 
                 event.preventDefault();
 
@@ -460,24 +476,49 @@
                     return;
                 }
 
-                // Don't do anything if dropped in the same column
+                /*
+                |--------------------------------------------------------------------------
+                | Don't move if dropped in the same column
+                |--------------------------------------------------------------------------
+                */
+
                 if (sourceList === list) {
                     return;
                 }
 
-                // Remove empty message from destination column
-                const emptyMessage =
-                    list.querySelector('.empty-column');
+
+                const taskId = draggedTask.dataset.taskId;
+                const columnId = list.dataset.columnId;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Remove "No tasks yet."
+                |--------------------------------------------------------------------------
+                */
+
+                const emptyMessage = list.querySelector('.empty-column');
 
                 if (emptyMessage) {
                     emptyMessage.remove();
                 }
 
-                // Move task to destination
+
+                /*
+                |--------------------------------------------------------------------------
+                | Move task visually
+                |--------------------------------------------------------------------------
+                */
+
                 list.appendChild(draggedTask);
 
-                // If source column has no tasks left,
-                // show "No tasks yet."
+
+                /*
+                |--------------------------------------------------------------------------
+                | Show empty message in source column
+                |--------------------------------------------------------------------------
+                */
+
                 if (!sourceList.querySelector('.task-card')) {
 
                     const message = document.createElement('p');
@@ -488,6 +529,79 @@
                     message.textContent = 'No tasks yet.';
 
                     sourceList.appendChild(message);
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Calculate task position
+                |--------------------------------------------------------------------------
+                |
+                | Because the task is appended to the destination column,
+                | its position is the number of task cards already in
+                | that column minus 1.
+                |
+                */
+
+                const tasks = list.querySelectorAll('.task-card');
+
+                const position = tasks.length - 1;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Send move request to Laravel
+                |--------------------------------------------------------------------------
+                */
+
+                try {
+
+                    const response = await fetch(
+                        "{{ route('projects.tasks.move', [$project, '__TASK_ID__']) }}"
+                            .replace('__TASK_ID__', taskId),
+                        {
+                            method: 'PATCH',
+
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN':
+                                    document
+                                        .querySelector('meta[name="csrf-token"]')
+                                        .getAttribute('content')
+                            },
+
+                            body: JSON.stringify({
+                                board_column_id: columnId,
+                                position: position
+                            })
+                        }
+                    );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Handle failed request
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (!response.ok) {
+                        throw new Error('Failed to move task.');
+                    }
+
+                } catch (error) {
+
+                    console.error(error);
+
+                    alert('The task could not be moved.');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Reload so UI matches database
+                    |--------------------------------------------------------------------------
+                    */
+
+                    window.location.reload();
                 }
 
             });

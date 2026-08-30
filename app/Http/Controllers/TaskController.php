@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Http\Requests\MoveTaskRequest;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -59,14 +60,33 @@ class TaskController extends Controller
 
         $validated = $request->validated();
 
-        $task->update([
-            'board_column_id' => $validated['board_column_id'],
-            'position' => $validated['position'],
-        ]);
+        DB::transaction(function () use ($task, $validated) {
+            $oldColumnId = $task->board_column_id;
+            $newColumnId = $validated['board_column_id'];
+            $newPosition = $validated['position'];
+
+            if ($oldColumnId !== $newColumnId) {
+                Task::where('board_column_id', $oldColumnId)
+                    ->where('position', '>', $task->position)
+                    ->decrement('position');
+            }
+
+            $task->update([
+                'board_column_id' => $newColumnId,
+            ]);
+
+            Task::where('board_column_id', $newColumnId)
+                ->where('id', '!=', $task->id)
+                ->where('position', '>=', $newPosition)
+                ->increment('position');
+
+            $task->update([
+                'position' => $newPosition,
+            ]);
+        });
 
         return response()->json([
-            'message' => 'Task moved successfully.',
-            'task' => $task->fresh(),
+            'success' => true,
         ]);
     }
 }
