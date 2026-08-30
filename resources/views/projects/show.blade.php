@@ -103,126 +103,131 @@
             @enderror
 
 
-            {{-- Task Filters --}}
-            <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+            {{-- ========================= --}}
+            {{-- TASK FILTERS --}}
+            {{-- ========================= --}}
+            <div class="mb-6 p-5 bg-white border rounded-lg shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold">
+                            Task Filters
+                        </h2>
+                        <p class="text-sm text-gray-500">
+                            Filter and sort the tasks on this board.
+                        </p>
+                    </div>
+
+                    <a
+                        href="{{ route('projects.show', $project) }}"
+                        class="text-sm text-gray-600 hover:text-black underline"
+                    >
+                        Clear filters
+                    </a>
+                </div>
 
                 <form
                     method="GET"
                     action="{{ route('projects.show', $project) }}"
-                    class="flex flex-wrap items-end gap-4"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
                 >
 
                     {{-- Assignee --}}
                     <div>
                         <label
                             for="assignee_id"
-                            class="block text-sm font-medium mb-1"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Assignee
                         </label>
 
                         <select
-                            name="assignee_id"
                             id="assignee_id"
-                            class="border rounded px-3 py-2"
+                            name="assignee_id"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
                         >
                             <option value="">
-                                All Assignees
+                                All assignees
                             </option>
 
                             @foreach ($users as $user)
                                 <option
                                     value="{{ $user->id }}"
-                                    @selected($assigneeId == $user->id)
+                                    @selected(request('assignee_id') == $user->id)
                                 >
                                     {{ $user->name }}
                                 </option>
                             @endforeach
-
                         </select>
                     </div>
-
 
                     {{-- Due Date --}}
                     <div>
                         <label
                             for="due_date"
-                            class="block text-sm font-medium mb-1"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Due Date
                         </label>
 
                         <input
+                            id="due_date"
                             type="date"
                             name="due_date"
-                            id="due_date"
-                            value="{{ $dueDate }}"
-                            class="border rounded px-3 py-2"
+                            value="{{ request('due_date') }}"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2"
                         >
                     </div>
-
 
                     {{-- Sort --}}
                     <div>
                         <label
-                            for="sort_due_date"
-                            class="block text-sm font-medium mb-1"
+                            for="sort"
+                            class="block text-sm font-medium text-gray-700 mb-1"
                         >
                             Sort by Due Date
                         </label>
 
                         <select
-                            name="sort_due_date"
-                            id="sort_due_date"
-                            class="border rounded px-3 py-2"
+                            id="sort"
+                            name="sort"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
                         >
-
-                            <option value="">
+                            <option
+                                value=""
+                                @selected(!request('sort'))
+                            >
                                 Default
                             </option>
 
                             <option
                                 value="asc"
-                                @selected($sortDueDate === 'asc')
+                                @selected(request('sort') === 'asc')
                             >
                                 Earliest first
                             </option>
 
                             <option
                                 value="desc"
-                                @selected($sortDueDate === 'desc')
+                                @selected(request('sort') === 'desc')
                             >
                                 Latest first
                             </option>
-
                         </select>
                     </div>
 
-
                     {{-- Apply --}}
-                    <button
-                        type="submit"
-                        class="px-4 py-2 bg-black text-white rounded"
-                    >
-                        Apply Filters
-                    </button>
-
-
-                    {{-- Clear --}}
-                    @if ($assigneeId || $dueDate || $sortDueDate)
-
-                        <a
-                            href="{{ route('projects.show', $project) }}"
-                            class="px-4 py-2 border rounded"
+                    <div>
+                        <button
+                            type="submit"
+                            class="w-full px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
                         >
-                            Clear
-                        </a>
-
-                    @endif
+                            Apply Filters
+                        </button>
+                    </div>
 
                 </form>
+            </div>
 
-            </div>   
             {{-- Kanban Board --}}
             <div class="flex gap-4 overflow-x-auto pb-4">
 

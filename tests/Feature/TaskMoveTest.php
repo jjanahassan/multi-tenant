@@ -95,3 +95,55 @@ test('user cannot move a task to a column from another project', function () {
         'board_column_id' => $projectOne->boardColumns()->first()->id,
     ]);
 });
+
+test('user can reorder a task within the same column', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'admin',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()->first();
+
+    $firstTask = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'position' => 0,
+    ]);
+
+    $secondTask = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'position' => 1,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->patchJson(
+            route('projects.tasks.move', [
+                'project' => $project,
+                'task' => $secondTask,
+            ]),
+            [
+                'board_column_id' => $column->id,
+                'position' => 0,
+            ]
+        );
+
+    $response
+        ->assertSuccessful()
+        ->assertJson([
+            'message' => 'Task moved successfully.',
+        ]);
+
+    $this->assertDatabaseHas('tasks', [
+        'id' => $secondTask->id,
+        'board_column_id' => $column->id,
+        'position' => 0,
+    ]);
+});
