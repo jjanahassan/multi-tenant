@@ -104,23 +104,26 @@
 
 
             {{-- Task Filters --}}
-                <div class="mb-6 flex items-center gap-3">
+            <div class="mb-6 p-4 border rounded-lg bg-gray-50">
 
-                    <label
-                        for="assignee_id"
-                        class="font-medium"
-                    >
-                        Filter by assignee:
-                    </label>
+                <form
+                    method="GET"
+                    action="{{ route('projects.show', $project) }}"
+                    class="flex flex-wrap items-end gap-4"
+                >
 
-                    <form
-                        method="GET"
-                        action="{{ route('projects.show', $project) }}"
-                    >
+                    {{-- Assignee --}}
+                    <div>
+                        <label
+                            for="assignee_id"
+                            class="block text-sm font-medium mb-1"
+                        >
+                            Assignee
+                        </label>
+
                         <select
                             name="assignee_id"
                             id="assignee_id"
-                            onchange="this.form.submit()"
                             class="border rounded px-3 py-2"
                         >
                             <option value="">
@@ -137,19 +140,89 @@
                             @endforeach
 
                         </select>
-                    </form>
+                    </div>
 
-                    @if ($assigneeId)
+
+                    {{-- Due Date --}}
+                    <div>
+                        <label
+                            for="due_date"
+                            class="block text-sm font-medium mb-1"
+                        >
+                            Due Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="due_date"
+                            id="due_date"
+                            value="{{ $dueDate }}"
+                            class="border rounded px-3 py-2"
+                        >
+                    </div>
+
+
+                    {{-- Sort --}}
+                    <div>
+                        <label
+                            for="sort_due_date"
+                            class="block text-sm font-medium mb-1"
+                        >
+                            Sort by Due Date
+                        </label>
+
+                        <select
+                            name="sort_due_date"
+                            id="sort_due_date"
+                            class="border rounded px-3 py-2"
+                        >
+
+                            <option value="">
+                                Default
+                            </option>
+
+                            <option
+                                value="asc"
+                                @selected($sortDueDate === 'asc')
+                            >
+                                Earliest first
+                            </option>
+
+                            <option
+                                value="desc"
+                                @selected($sortDueDate === 'desc')
+                            >
+                                Latest first
+                            </option>
+
+                        </select>
+                    </div>
+
+
+                    {{-- Apply --}}
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-black text-white rounded"
+                    >
+                        Apply Filters
+                    </button>
+
+
+                    {{-- Clear --}}
+                    @if ($assigneeId || $dueDate || $sortDueDate)
+
                         <a
                             href="{{ route('projects.show', $project) }}"
-                            class="px-3 py-2 border rounded"
+                            class="px-4 py-2 border rounded"
                         >
-                            Clear Filter
+                            Clear
                         </a>
+
                     @endif
 
-                </div>
-                
+                </form>
+
+            </div>   
             {{-- Kanban Board --}}
             <div class="flex gap-4 overflow-x-auto pb-4">
 

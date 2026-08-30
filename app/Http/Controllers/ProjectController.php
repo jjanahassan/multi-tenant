@@ -54,18 +54,52 @@ class ProjectController extends Controller
     /**
      * Display the specified project.
      */
-    public function show(Request $request, Project $project)
+
+public function show(Request $request, Project $project)
     {
         $users = $project->company->users;
 
         $assigneeId = $request->input('assignee_id');
+        $dueDate = $request->input('due_date');
+        $sortDueDate = $request->input('sort_due_date');
 
         $project->load([
-            'boardColumns.tasks' => function ($query) use ($assigneeId) {
+            'boardColumns.tasks' => function ($query) use (
+                $assigneeId,
+                $dueDate,
+                $sortDueDate
+            ) {
+
+                /*
+                * Filter by assignee
+                */
                 if ($assigneeId) {
                     $query->where('assignee_id', $assigneeId);
                 }
 
+                /*
+                * Filter by exact due date
+                */
+                if ($dueDate) {
+                    $query->whereDate('due_date', $dueDate);
+                }
+
+                /*
+                * Sort by due date
+                */
+                if ($sortDueDate === 'asc') {
+                    $query->orderByRaw(
+                        'due_date IS NULL, due_date ASC'
+                    );
+                } elseif ($sortDueDate === 'desc') {
+                    $query->orderByRaw(
+                        'due_date IS NULL, due_date DESC'
+                    );
+                }
+
+                /*
+                * Always use position as the secondary ordering.
+                */
                 $query->orderBy('position');
             },
         ]);
@@ -73,18 +107,10 @@ class ProjectController extends Controller
         return view('projects.show', compact(
             'project',
             'users',
-            'assigneeId'
+            'assigneeId',
+            'dueDate',
+            'sortDueDate'
         ));
-    }
-
-    /**
-     * Show the form for editing a project.
-     */
-    public function edit(Project $project)
-    {
-        $this->authorize('update', $project);
-
-        return view('projects.edit', compact('project'));
     }
 
     /**

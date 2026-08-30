@@ -325,3 +325,86 @@ test('user can filter tasks by assignee', function () {
     $response->assertSee($taskOne->title);
     $response->assertDontSee($taskTwo->title);
 });
+
+test('user can filter tasks by due date', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()->first();
+
+    $taskDueToday = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'due_date' => '2026-09-01',
+    ]);
+
+    $taskDueLater = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'due_date' => '2026-09-10',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'due_date' => '2026-09-01',
+        ]));
+
+    $response->assertOk();
+
+    $response->assertSee($taskDueToday->title);
+    $response->assertDontSee($taskDueLater->title);
+});
+
+test('user can sort tasks by due date', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()->first();
+
+    $laterTask = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'title' => 'Later Task',
+        'due_date' => '2026-09-10',
+    ]);
+
+    $earlierTask = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'title' => 'Earlier Task',
+        'due_date' => '2026-09-01',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'sort_due_date' => 'asc',
+        ]));
+
+    $response->assertOk();
+
+    $content = $response->getContent();
+
+    expect(
+        strpos($content, 'Earlier Task')
+    )->toBeLessThan(
+        strpos($content, 'Later Task')
+    );
+});
