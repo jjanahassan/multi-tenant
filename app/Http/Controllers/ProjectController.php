@@ -61,46 +61,60 @@ public function show(Request $request, Project $project)
 
         $assigneeId = $request->input('assignee_id');
         $dueDate = $request->input('due_date');
-        $sortDueDate = $request->input('sort_due_date');
+        $sortDueDate = $request->input('sort');
 
         $project->load([
-            'boardColumns.tasks' => function ($query) use (
+            'boardColumns' => function ($columnQuery) use (
                 $assigneeId,
                 $dueDate,
                 $sortDueDate
             ) {
+                $columnQuery->with([
+                    'tasks' => function ($taskQuery) use (
+                        $assigneeId,
+                        $dueDate,
+                        $sortDueDate
+                    ) {
+                        /*
+                        * Filter by assignee
+                        */
+                        if ($assigneeId) {
+                            $taskQuery->where('assignee_id', $assigneeId);
+                        }
 
-                /*
-                * Filter by assignee
-                */
-                if ($assigneeId) {
-                    $query->where('assignee_id', $assigneeId);
-                }
+                        /*
+                        * Filter by exact due date
+                        */
+                        if ($dueDate) {
+                            $taskQuery->whereDate('due_date', $dueDate);
+                        }
 
-                /*
-                * Filter by exact due date
-                */
-                if ($dueDate) {
-                    $query->whereDate('due_date', $dueDate);
-                }
+                        /*
+                        * Sort by due date
+                        */
+                        if ($sortDueDate === 'asc') {
+                            $taskQuery->orderByRaw(
+                                'due_date IS NULL, due_date ASC'
+                            );
+                        } elseif ($sortDueDate === 'desc') {
+                            $taskQuery->orderByRaw(
+                                'due_date IS NULL, due_date DESC'
+                            );
+                        }
 
-                /*
-                * Sort by due date
-                */
-                if ($sortDueDate === 'asc') {
-                    $query->orderByRaw(
-                        'due_date IS NULL, due_date ASC'
-                    );
-                } elseif ($sortDueDate === 'desc') {
-                    $query->orderByRaw(
-                        'due_date IS NULL, due_date DESC'
-                    );
-                }
+                        /*
+                        * Always use position as the secondary ordering.
+                        */
+                        $taskQuery->orderBy('position');
 
-                /*
-                * Always use position as the secondary ordering.
-                */
-                $query->orderBy('position');
+                        /*
+                        * Load comments and their users.
+                        */
+                        $taskQuery->with([
+                            'comments.user',
+                        ]);
+                    },
+                ]);
             },
         ]);
 

@@ -421,8 +421,101 @@
                                         </p>
                                     @endif
 
+
                                 </div>
 
+                                {{-- Comments --}}
+                                <div class="mt-4 pt-4 border-t">
+
+                                    <h4 class="font-medium text-sm mb-3">
+                                        Comments
+                                    </h4>
+
+                                    <div class="space-y-2 mb-4">
+                                        @forelse ($task->comments->sortBy('created_at') as $comment)
+
+                                            <div class="bg-gray-50 rounded p-3">
+
+                                                <div class="flex items-start justify-between gap-2">
+
+                                                    <div>
+                                                        <p class="text-sm font-medium">
+                                                            {{ $comment->user->name }}
+                                                        </p>
+
+                                                        <p class="text-xs text-gray-500">
+                                                            {{ $comment->created_at->format('M d, Y H:i') }}
+                                                        </p>
+
+                                                        <p class="text-sm mt-2">
+                                                            {{ $comment->body }}
+                                                        </p>
+                                                    </div>
+
+
+                                                    @if ($comment->user_id === auth()->id())
+                                                        <form
+                                                            method="POST"
+                                                            action="{{ route('comments.destroy', $comment) }}"
+                                                        >
+                                                            @csrf
+                                                            @method('DELETE')
+
+                                                            <button
+                                                                type="submit"
+                                                                class="text-xs text-red-600"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </form>
+                                                    @endif
+
+                                                </div>
+
+                                                
+
+                                            </div>
+
+                                        @empty
+
+                                            <p class="text-sm text-gray-500">
+                                                No comments yet.
+                                            </p>
+
+                                        @endforelse
+                                    </div>
+
+                                    {{-- Add Comment --}}
+                                    <form
+                                        method="POST"
+                                        action="{{ route('tasks.comments.store', $task) }}"
+                                        class="space-y-2"
+                                    >
+                                        @csrf
+
+                                        <textarea
+                                            name="body"
+                                            rows="2"
+                                            placeholder="Write a comment..."
+                                            class="border rounded px-3 py-2 w-full text-sm"
+                                            required
+                                        >{{ old('body') }}</textarea>
+
+                                        @error('body')
+                                            <p class="text-red-500 text-xs">
+                                                {{ $message }}
+                                            </p>
+                                        @enderror
+
+                                        <button
+                                            type="submit"
+                                            class="px-3 py-2 bg-black text-white rounded text-sm"
+                                        >
+                                            Add Comment
+                                        </button>
+                                    </form>
+
+                                </div>
                             @empty
 
                                 <p class="empty-column text-sm text-gray-500">

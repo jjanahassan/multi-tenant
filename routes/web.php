@@ -7,6 +7,7 @@ use App\Http\Controllers\BoardColumnController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\CommentController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -87,6 +88,15 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         [TaskController::class, 'move']
     )->name('projects.tasks.move');
     
+    Route::post(
+        '/tasks/{task}/comments',
+        [CommentController::class, 'store']
+    )->name('tasks.comments.store');
+
+    Route::delete(
+        '/comments/{comment}',
+        [CommentController::class, 'destroy']
+    )->name('comments.destroy');
 });
 
 require __DIR__.'/settings.php';
