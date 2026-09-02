@@ -8,6 +8,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\NotificationController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -97,6 +98,12 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         '/comments/{comment}',
         [CommentController::class, 'destroy']
     )->name('comments.destroy');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
 });
 
 require __DIR__.'/settings.php';
