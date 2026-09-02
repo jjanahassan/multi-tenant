@@ -61,7 +61,7 @@ public function show(Request $request, Project $project)
 
         $assigneeId = $request->input('assignee_id');
         $dueDate = $request->input('due_date');
-        $sortDueDate = $request->input('sort');
+        $sortDueDate = $request->input('sort_due_date');
 
         $project->load([
             'boardColumns' => function ($columnQuery) use (
