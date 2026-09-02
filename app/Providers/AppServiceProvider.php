@@ -13,6 +13,8 @@ use App\Events\TaskCreated;
 use App\Events\TaskMoved;
 use App\Listeners\LogTaskActivity;
 use Illuminate\Support\Facades\Event;
+use App\Listeners\SendTaskAssignedNotification;
+use App\Listeners\SendTaskCommentedNotification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(TaskMoved::class, LogTaskActivity::class);
         Event::listen(TaskAssigned::class, LogTaskActivity::class);
         Event::listen(CommentAdded::class, LogTaskActivity::class);
+        Event::listen(TaskAssigned::class, SendTaskAssignedNotification::class);
+        Event::listen(CommentAdded::class, SendTaskCommentedNotification::class);
+
     }
 
     /**
