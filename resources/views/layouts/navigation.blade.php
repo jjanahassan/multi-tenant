@@ -15,6 +15,21 @@
                     {{ auth()->user()->company->name ?? 'No Company' }}
                 </span>
 
+                <div class="relative">
+                    <a
+                        href="{{ route('notifications.index') }}"
+                        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                    >
+                        🔔 Notifications
+
+                        @if (auth()->user()->unreadNotifications->count() > 0)
+                            <span class="ml-2 inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                {{ auth()->user()->unreadNotifications->count() }}
+                            </span>
+                        @endif
+                    </a>
+                </div>
+                
                 <!-- User Dropdown -->
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none">

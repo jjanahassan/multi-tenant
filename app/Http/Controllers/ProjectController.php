@@ -36,6 +36,16 @@ class ProjectController extends Controller
     }
 
     /**
+     * Show the form for editing the specified project.
+     */
+    public function edit(Project $project)
+    {
+        $this->authorize('update', $project);
+
+        return view('projects.edit', compact('project'));
+    }
+
+    /**
      * Store a newly created project.
      */
     public function store(StoreProjectRequest $request)
@@ -64,43 +74,57 @@ public function show(Request $request, Project $project)
         $sortDueDate = $request->input('sort_due_date');
 
         $project->load([
-            'boardColumns.tasks' => function ($query) use (
+            'boardColumns' => function ($columnQuery) use (
                 $assigneeId,
                 $dueDate,
                 $sortDueDate
             ) {
+                $columnQuery->with([
+                    'tasks' => function ($taskQuery) use (
+                        $assigneeId,
+                        $dueDate,
+                        $sortDueDate
+                    ) {
+                        /*
+                        * Filter by assignee
+                        */
+                        if ($assigneeId) {
+                            $taskQuery->where('assignee_id', $assigneeId);
+                        }
 
-                /*
-                * Filter by assignee
-                */
-                if ($assigneeId) {
-                    $query->where('assignee_id', $assigneeId);
-                }
+                        /*
+                        * Filter by exact due date
+                        */
+                        if ($dueDate) {
+                            $taskQuery->whereDate('due_date', $dueDate);
+                        }
 
-                /*
-                * Filter by exact due date
-                */
-                if ($dueDate) {
-                    $query->whereDate('due_date', $dueDate);
-                }
+                        /*
+                        * Sort by due date
+                        */
+                        if ($sortDueDate === 'asc') {
+                            $taskQuery->orderByRaw(
+                                'due_date IS NULL, due_date ASC'
+                            );
+                        } elseif ($sortDueDate === 'desc') {
+                            $taskQuery->orderByRaw(
+                                'due_date IS NULL, due_date DESC'
+                            );
+                        }
 
-                /*
-                * Sort by due date
-                */
-                if ($sortDueDate === 'asc') {
-                    $query->orderByRaw(
-                        'due_date IS NULL, due_date ASC'
-                    );
-                } elseif ($sortDueDate === 'desc') {
-                    $query->orderByRaw(
-                        'due_date IS NULL, due_date DESC'
-                    );
-                }
+                        /*
+                        * Always use position as the secondary ordering.
+                        */
+                        $taskQuery->orderBy('position');
 
-                /*
-                * Always use position as the secondary ordering.
-                */
-                $query->orderBy('position');
+                        /*
+                        * Load comments and their users.
+                        */
+                        $taskQuery->with([
+                            'comments.user',
+                        ]);
+                    },
+                ]);
             },
         ]);
 
@@ -120,6 +144,8 @@ public function show(Request $request, Project $project)
         UpdateProjectRequest $request,
         Project $project
     ) {
+        $this->authorize('update', $project);
+        
         $project->update($request->validated());
 
         return redirect()

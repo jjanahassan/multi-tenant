@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
@@ -25,7 +27,15 @@ class Task extends Model
         return $this->belongsTo(BoardColumn::class);
     }
 
-    public function assignee():BelongsTo{
+    public function assignee(): BelongsTo{
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    public function comments(): MorphMany{
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function activities(): HasMany{
+        return $this->hasMany(Activity::class);
     }
 }

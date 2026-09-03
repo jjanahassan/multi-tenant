@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        
     }
 
     /**
@@ -46,5 +47,10 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    public function shouldDiscoverEvents(): bool
+    {
+        return false;
     }
 }
