@@ -36,6 +36,16 @@ class ProjectController extends Controller
     }
 
     /**
+     * Show the form for editing the specified project.
+     */
+    public function edit(Project $project)
+    {
+        $this->authorize('update', $project);
+
+        return view('projects.edit', compact('project'));
+    }
+
+    /**
      * Store a newly created project.
      */
     public function store(StoreProjectRequest $request)
@@ -134,6 +144,8 @@ public function show(Request $request, Project $project)
         UpdateProjectRequest $request,
         Project $project
     ) {
+        $this->authorize('update', $project);
+        
         $project->update($request->validated());
 
         return redirect()

@@ -153,3 +153,33 @@ test('notification can be marked as read', function () {
             ->read_at
     )->not->toBeNull();
 });
+
+test('user can retrieve unread notifications', function () {
+    $user = User::factory()->create();
+
+    $unreadNotification = $user->notifications()->create([
+        'id' => Str::uuid(),
+        'type' => TaskAssignedNotification::class,
+        'data' => [
+            'task_id' => 1,
+            'task_title' => 'Test Task',
+            'message' => 'You have been assigned to a task.',
+        ],
+    ]);
+
+    $readNotification = $user->notifications()->create([
+        'id' => Str::uuid(),
+        'type' => TaskAssignedNotification::class,
+        'data' => [
+            'task_id' => 2,
+            'task_title' => 'Another Task',
+            'message' => 'You have been assigned to a task.',
+        ],
+        'read_at' => now(),
+    ]);
+
+    expect($user->unreadNotifications)
+    ->toHaveCount(1)
+    ->and((string) $user->unreadNotifications->first()->id)
+    ->toBe((string) $unreadNotification->id);
+});

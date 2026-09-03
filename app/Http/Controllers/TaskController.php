@@ -17,30 +17,41 @@ class TaskController extends Controller
 {
     use AuthorizesRequests;
 
-    public function store(StoreTaskRequest $request, Project $project){
-        
-        $validated= $request-> validated();
+    public function store(StoreTaskRequest $request, Project $project)
+    {
+        $validated = $request->validated();
 
-        $nextPosition= (
+        $nextPosition = (
             $project
-            ->tasks()
-            ->where('board_column_id', $validated['board_column_id'])
-            ->max('position')
-            ?? -1
-        ) +1;
+                ->tasks()
+                ->where('board_column_id', $validated['board_column_id'])
+                ->max('position')
+                ?? -1
+        ) + 1;
 
         $task = $project->tasks()->create([
-            'board_column_id'=> $validated['board_column_id'],
-            'assignee_id'=> $validated['assignee_id']?? null,
-            'title'=> $validated['title'],
-            'description'=> $validated['description']?? null,
-            'due_date'=>$validated['due_date']?? null,
-            'position'=> $nextPosition,
+            'board_column_id' => $validated['board_column_id'],
+            'assignee_id' => $validated['assignee_id'] ?? null,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'due_date' => $validated['due_date'] ?? null,
+            'position' => $nextPosition,
         ]);
 
         TaskCreated::dispatch($task, auth()->user());
 
-        return back()-> with('success', 'Task created successfully,');
+        if ($task->assignee_id) {
+            $task->refresh();
+            $task->load('assignee');
+
+            TaskAssigned::dispatch(
+                $task,
+                auth()->user(),
+                null
+            );
+        }
+
+        return back()->with('success', 'Task created successfully.');
     }
 
     public function update(UpdateTaskRequest $request, Project $project, Task $task){
@@ -50,7 +61,14 @@ class TaskController extends Controller
         $task->update($request->validated());
 
         if ($previousAssigneeId !== $task->assignee_id) {
-        TaskAssigned::dispatch($task, auth()->user(), $previousAssigneeId);
+            $task->refresh();
+            $task->load('assignee');
+
+            TaskAssigned::dispatch(
+                $task,
+                auth()->user(),
+                $previousAssigneeId
+            );
         }
 
         return back()-> with('success', 'Task updated successfully.');
