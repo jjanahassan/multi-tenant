@@ -1,6 +1,6 @@
 # Multi-Tenant Laravel Application
 
-A multi-tenant Laravel application with company-based authentication, role-based authorization, tenant data isolation, project management, customizable Kanban boards, task management, comments, activity logging, and database notifications.
+A multi-tenant Laravel application with company-based authentication, role-based authorization, tenant data isolation, project management, customizable Kanban boards, task management, comments, activity logging, database notifications, and asynchronous background jobs for due-date reminders.
 
 ## 🚀 Features
 
@@ -34,11 +34,18 @@ A multi-tenant Laravel application with company-based authentication, role-based
 - **Comment Notifications**: Assignees receive database notifications when someone comments on their task.
 - **Unread Notifications**: Users can view their unread notifications.
 - **Mark as Read**: Notifications can be marked as read and the read state persists.
+- **Background Jobs**: Time-consuming and scheduled operations are processed asynchronously using Laravel queues.
+- **Database Queue**: The application uses Laravel's database queue for background job processing.
+- **Due-Date Reminders**: Tasks due within the reminder window generate asynchronous reminder jobs for their assignees.
+- **Scheduled Reminders**: A daily Laravel Scheduler command discovers due-soon tasks and dispatches reminder jobs.
+- **Retry & Backoff**: Due-date reminder jobs retry automatically with progressive backoff when processing fails.
+- **Failed Job Handling**: Permanently failed jobs are stored in Laravel's `failed_jobs` table and logged.
+- **Idempotent Reminders**: Due-date reminders use persistent tracking and deterministic notification IDs to prevent duplicate reminders.
 - **Request Validation**: Form Requests validate project, board column, task, movement, and comment operations.
 - **Tenant-Scoped Projects**: Projects are automatically restricted to the authenticated user's company.
 - **Tenant-Scoped Tasks**: Tasks are restricted to projects and users belonging to the authenticated user's company.
 - **Switch Company**: Scaffold for switching between companies.
-- **Comprehensive Testing**: Feature tests cover authentication, authorization, tenant isolation, projects, board columns, tasks, comments, activities, and notifications.
+- **Comprehensive Testing**: Feature tests cover authentication, authorization, tenant isolation, projects, board columns, tasks, comments, activities, notifications, queues, and due-date reminders.
 
 ---
 
@@ -94,15 +101,25 @@ Then make sure the `.env` file contains:
 
     DB_CONNECTION=sqlite
 
-### 7. Run Migrations
+### 7. Configure the Queue
+
+The application uses Laravel's database queue for asynchronous background processing.
+
+Make sure the `.env` file contains:
+
+    QUEUE_CONNECTION=database
+
+### 8. Run Migrations
 
     php artisan migrate
 
-### 8. Build Frontend Assets
+The migrations create the application tables as well as the database queue and failed-jobs tables.
+
+### 9. Build Frontend Assets
 
     npm run build
 
-### 9. Start the Development Server
+### 10. Start the Development Server
 
     php artisan serve
 
@@ -113,6 +130,16 @@ The application will be available at:
 For frontend development with Vite, use:
 
     npm run dev
+
+### 11. Start the Queue Worker
+
+Because the application uses a real database-backed queue, start a queue worker when processing background jobs:
+
+    php artisan queue:work
+
+For testing a single queued job:
+
+    php artisan queue:work --once
 
 ---
 
@@ -188,7 +215,7 @@ Tasks belong to a project and a board column.
 | Column | Type | Description |
 |---|---|---|
 | `id` | bigint | Primary key |
-| `project_id` | bigint | Project the task belongs to |
+| `project_id` | bigint | The project the task belongs to |
 | `board_column_id` | bigint | Current board column |
 | `assignee_id` | bigint | Assigned company user, nullable |
 | `title` | string | Task title |
@@ -240,12 +267,47 @@ Notifications currently cover:
 
     task_assigned
     task_commented
+    task_due_soon
 
 Notifications contain a persistent `read_at` value which allows users to mark notifications as read.
 
 ### Invitations
 
 Invitations are associated with companies and users and are used to invite teammates with a selected role.
+
+### Due Date Reminders
+
+The `due_date_reminders` table provides persistent idempotency tracking for due-date reminder jobs.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | bigint | Primary key |
+| `task_id` | bigint | Task receiving the reminder |
+| `assignee_id` | bigint | User receiving the reminder |
+| `due_date` | date | Due date associated with the reminder |
+| `sent_at` | timestamp | Time the reminder notification was successfully sent |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Update timestamp |
+
+The combination of:
+
+    task_id
+    assignee_id
+    due_date
+
+is unique.
+
+This prevents duplicate reminder records for the same task, assignee, and due date.
+
+### Queue Jobs
+
+Laravel's database queue stores pending background jobs in the `jobs` table.
+
+Permanently failed jobs are stored in:
+
+    failed_jobs
+
+This allows failed background processing to be inspected and retried instead of silently disappearing.
 
 ---
 
@@ -281,11 +343,17 @@ Invitations are associated with companies and users and are used to invite teamm
     ├── belongsTo User (assignee)
     ├── morphMany Comments
     └── hasMany Activities
+    └── hasMany Due Date Reminders
 
     Comment
     │
     ├── belongsTo User
     └── morphTo Commentable
+
+    DueDateReminder
+    │
+    ├── belongsTo Task
+    └── belongsTo User (assignee)
 
 ---
 
@@ -524,7 +592,19 @@ When someone comments on a task, the assignee receives:
 
     A new comment was added to your task.
 
-Users do not receive notifications for their own actions.
+### Due-Date Reminder Notifications
+
+When a task is due within the reminder window, the task assignee receives a database notification indicating that the task is due soon.
+
+The due-date reminder notification contains information including:
+
+- Task
+- Project
+- Task title
+- Due date
+- Reminder message
+
+Users do not receive notifications for their own actions where applicable.
 
 ### Notification State
 
@@ -539,6 +619,126 @@ When the notification is marked as read:
     read_at = current timestamp
 
 The read state is persisted in the database.
+
+---
+
+## 🧵 Background Jobs & Queues
+
+The application uses Laravel's database-backed queue system to process background work asynchronously.
+
+The queue connection is configured using:
+
+    QUEUE_CONNECTION=database
+
+This prevents background processing from having to occur directly inside a web request.
+
+### Due-Date Reminder Workflow
+
+The due-date reminder workflow is:
+
+    Laravel Scheduler
+          ↓
+    tasks:send-due-date-reminders
+          ↓
+    Find due-soon tasks
+          ↓
+    Dispatch SendDueDateReminder Job
+          ↓
+    Database jobs table
+          ↓
+    Queue Worker
+          ↓
+    SendDueDateReminder
+          ↓
+    DueDateReminderNotification
+          ↓
+    Database Notification
+
+### Reminder Command
+
+The reminder command can be run manually with:
+
+    php artisan tasks:send-due-date-reminders
+
+The command:
+
+- Finds tasks with a due date.
+- Finds tasks with an assignee.
+- Selects tasks due within the configured 24-hour calendar window.
+- Dispatches one reminder job per eligible task.
+
+### Queue Worker
+
+Start a queue worker with:
+
+    php artisan queue:work
+
+To process one job:
+
+    php artisan queue:work --once
+
+### Scheduled Execution
+
+Laravel Scheduler runs the reminder command daily:
+
+    Schedule::command('tasks:send-due-date-reminders')
+        ->daily();
+
+The configured schedules can be inspected with:
+
+    php artisan schedule:list
+
+### Retry Configuration
+
+Due-date reminder jobs use:
+
+    3 attempts
+
+with a timeout of:
+
+    60 seconds
+
+Retry backoff is:
+
+    60 seconds
+    5 minutes
+    15 minutes
+
+This allows temporary failures to recover without immediately marking the job as permanently failed.
+
+### Failed Jobs
+
+If a reminder job fails permanently, Laravel stores it in the `failed_jobs` table.
+
+Failed jobs can be inspected with:
+
+    php artisan queue:failed
+
+A failed job can be retried using:
+
+    php artisan queue:retry <id>
+
+A failed job can be removed using:
+
+    php artisan queue:forget <id>
+
+The reminder job also records permanent failures in the Laravel application log.
+
+### Idempotency
+
+Due-date reminders are designed to be idempotent.
+
+Each reminder is uniquely identified by:
+
+    task_id + assignee_id + due_date
+
+The `due_date_reminders` table enforces this using a unique database constraint.
+
+The notification also uses a deterministic identifier based on the task, assignee, and due date.
+
+This means that if a worker is interrupted and the same job is retried, the application can recognize that the reminder has already been processed and avoid creating another reminder notification.
+
+Repeated execution of the same reminder job therefore does not create duplicate reminder records or duplicate notifications.
 
 ---
 
@@ -722,7 +922,7 @@ Task assignees must belong to the same company as the project.
 
 ## 🧪 Testing
 
-The application includes feature tests covering authentication, authorization, tenant isolation, projects, board columns, tasks, task movement, filtering, due dates, comments, activities, and notifications.
+The application includes feature tests covering authentication, authorization, tenant isolation, projects, board columns, tasks, task movement, filtering, due dates, comments, activities, notifications, background jobs, queues, and due-date reminders.
 
 Run the complete test suite with:
 
@@ -747,6 +947,14 @@ For comments:
 For notifications:
 
     php artisan test --filter="NotificationTest"
+
+For due-date reminder jobs:
+
+    php artisan test tests/Feature/SendDueDateReminderJobTest.php
+
+For due-date reminder command tests:
+
+    php artisan test tests/Feature/SendDueDateRemindersCommandTest.php
 
 The test suite verifies functionality including:
 
@@ -789,6 +997,13 @@ The test suite verifies functionality including:
 - Comment notifications
 - Unread notification retrieval
 - Notification read state persistence
+- Due-date reminder job dispatching
+- Due-date reminder job execution
+- Due-date reminder idempotency
+- Due-date reminder retry configuration
+- Ignoring tasks without assignees
+- Ignoring tasks without due dates
+- Ignoring tasks outside the reminder window
 
 ---
 
@@ -804,6 +1019,8 @@ The test suite verifies functionality including:
 - **Eloquent ORM**
 - **Pest / PHPUnit**
 - **Vite**
+- **Laravel Queue**
+- **Laravel Scheduler**
 - **Git / GitHub**
 
 ---
@@ -811,6 +1028,10 @@ The test suite verifies functionality including:
 ## 📂 Project Structure
 
     app/
+    ├── Console/
+    │   └── Commands/
+    │       └── SendDueDateReminders.php
+    │
     ├── Events/
     │   ├── CommentAdded.php
     │   ├── TaskAssigned.php
@@ -838,6 +1059,7 @@ The test suite verifies functionality including:
     │       └── MoveTaskRequest.php
     │
     ├── Jobs/
+    │   ├── SendDueDateReminder.php
     │   └── ...
     │
     ├── Listeners/
@@ -850,12 +1072,14 @@ The test suite verifies functionality including:
     │   ├── BoardColumn.php
     │   ├── Comment.php
     │   ├── Company.php
+    │   ├── DueDateReminder.php
     │   ├── Invitation.php
     │   ├── Project.php
     │   ├── Task.php
     │   └── User.php
     │
     ├── Notifications/
+    │   ├── DueDateReminderNotification.php
     │   ├── TaskAssignedNotification.php
     │   └── TaskCommentedNotification.php
     │
@@ -880,7 +1104,10 @@ The test suite verifies functionality including:
     │   ├── ..._create_tasks_table.php
     │   ├── ..._create_comments_table.php
     │   ├── ..._create_activities_table.php
-    │   └── ..._create_notifications_table.php
+    │   ├── ..._create_notifications_table.php
+    │   ├── ..._create_due_date_reminders_table.php
+    │   ├── ..._create_jobs_table.php
+    │   └── ..._create_failed_jobs_table.php
     │
     └── database.sqlite
 
@@ -898,6 +1125,7 @@ The test suite verifies functionality including:
         └── ...
 
     routes/
+    ├── console.php
     └── web.php
 
     tests/
@@ -907,6 +1135,8 @@ The test suite verifies functionality including:
         ├── CommentTest.php
         ├── NotificationTest.php
         ├── ProjectTest.php
+        ├── SendDueDateReminderJobTest.php
+        ├── SendDueDateRemindersCommandTest.php
         ├── TaskTest.php
         ├── TaskMoveTest.php
         └── ...
@@ -971,6 +1201,38 @@ Useful commands during development:
 
     php artisan optimize:clear
 
+### Queue Commands
+
+Start the database queue worker:
+
+    php artisan queue:work
+
+Process one queued job:
+
+    php artisan queue:work --once
+
+View failed jobs:
+
+    php artisan queue:failed
+
+Retry a failed job:
+
+    php artisan queue:retry <id>
+
+Forget a failed job:
+
+    php artisan queue:forget <id>
+
+### Due-Date Reminder Commands
+
+Run the due-date reminder command manually:
+
+    php artisan tasks:send-due-date-reminders
+
+Inspect the configured scheduler:
+
+    php artisan schedule:list
+
 ---
 
 ## 🧹 Clearing Laravel Caches
@@ -1001,16 +1263,16 @@ The project is developed using separate feature branches for each task/stage.
 
 Create a feature branch:
 
-    git checkout -b feature/task5
+    git checkout -b feature/task6
 
 After completing a task:
 
     git add .
-    git commit -m "feat: add comments activity logs and notifications"
+    git commit -m "test: cover due date reminder queue workflow"
 
 Push the branch:
 
-    git push -u origin feature/task5
+    git push -u origin feature/task6
 
 Then create a Pull Request on GitHub targeting `main`.
 
@@ -1127,6 +1389,64 @@ Implemented:
 
 ---
 
+### Task 6 — Background Jobs & Queues: Due-Date Reminders
+
+Implemented:
+
+- Database-backed Laravel queue
+- Database queue migration
+- Failed jobs migration
+- `SendDueDateReminder` queued job
+- `DueDateReminderNotification`
+- `DueDateReminder` model
+- Persistent due-date reminder tracking
+- Due-date reminder Artisan command
+- Daily Laravel Scheduler configuration
+- Automatic job dispatching for due-soon tasks
+- Real asynchronous queue processing
+- Job retry configuration
+- Progressive retry backoff
+- Job timeout
+- Permanent failure handling
+- Failed job logging
+- Failed job visibility through Laravel's queue commands
+- Deterministic notification IDs
+- Idempotent reminder processing
+- Unique reminder database constraint
+- Reminder command tests
+- Reminder job tests
+- Complete queue workflow verification
+
+### Task 6 Queue Workflow
+
+The completed Task 6 workflow is:
+
+    Daily Laravel Scheduler
+          ↓
+    tasks:send-due-date-reminders
+          ↓
+    Find tasks due within reminder window
+          ↓
+    Dispatch SendDueDateReminder
+          ↓
+    Database jobs table
+          ↓
+    Queue Worker
+          ↓
+    SendDueDateReminder
+          ↓
+    Check DueDateReminder
+          ↓
+    Check existing notification
+          ↓
+    Send DueDateReminderNotification
+          ↓
+    Mark reminder as sent
+
+The workflow is designed to safely retry interrupted jobs without producing duplicate reminder notifications.
+
+---
+
 ## 🧩 Complete Application Workflow
 
     Create Company
@@ -1168,6 +1488,18 @@ Implemented:
     View Notifications
           ↓
     Mark Notification as Read
+          ↓
+    Daily Reminder Scheduler
+          ↓
+    Find Due-Soon Tasks
+          ↓
+    Dispatch Reminder Jobs
+          ↓
+    Database Queue
+          ↓
+    Queue Worker
+          ↓
+    Due-Date Reminder Notification
 
 ---
 
@@ -1213,6 +1545,36 @@ This structure makes the application easier to extend because additional behavio
 
 ---
 
+## 🔄 Background Processing Architecture
+
+Scheduled background processing is separated from the HTTP request lifecycle.
+
+    Laravel Scheduler
+          ↓
+    Artisan Command
+          ↓
+    Queue Dispatch
+          ↓
+    Database Queue
+          ↓
+    Queue Worker
+          ↓
+    Background Job
+          ↓
+    Notification
+
+The scheduler is responsible for discovering work.
+
+The queue is responsible for storing pending work.
+
+The worker is responsible for processing the work.
+
+The job is responsible for performing the reminder operation.
+
+This separation allows reminder processing to continue independently from web requests.
+
+---
+
 ## 🔒 Security Considerations
 
 The application uses several layers of protection:
@@ -1249,7 +1611,9 @@ Important variables include:
 
     DB_CONNECTION=sqlite
 
-Additional Laravel mail, queue, cache, and frontend configuration can be added as needed.
+    QUEUE_CONNECTION=database
+
+Additional Laravel mail, cache, queue, and frontend configuration can be added as needed.
 
 ---
 
@@ -1285,6 +1649,18 @@ For example:
 
 A user belonging to Company A must never be able to access or modify Project B, Task B, or their associated tenant-specific data.
 
+### Background Job Reliability
+
+Background jobs are designed with failure scenarios in mind.
+
+If a temporary error occurs, Laravel retries the job according to its retry configuration.
+
+If a job continues to fail, Laravel records it in `failed_jobs`.
+
+If a worker is interrupted while processing a reminder, the job can be retried. The reminder's persistent unique record and deterministic notification identifier prevent duplicate reminder processing.
+
+This means background processing is not dependent on a single successful worker execution.
+
 ---
 
 ## 🎯 Future Improvements
@@ -1304,6 +1680,11 @@ Potential future improvements include:
 - More granular permissions
 - Automated browser/UI tests
 - Production deployment configuration
+- Redis queue support
+- Queue monitoring with Laravel Horizon
+- More advanced reminder scheduling
+- Configurable reminder windows
+- Email delivery for due-date reminders
 
 ---
 
