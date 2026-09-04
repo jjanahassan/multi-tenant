@@ -7,7 +7,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
-test('due soon assigned tasks are dispatched to the queue', function () {
+test('command dispatches reminders for tasks due today', function () {
     Queue::fake();
 
     $owner = User::factory()->create();
@@ -30,35 +30,60 @@ test('due soon assigned tasks are dispatched to the queue', function () {
         'company_id' => $company->id,
     ]);
 
-    $dueSoonTask = Task::factory()->create([
+    $task = Task::factory()->create([
         'project_id' => $project->id,
         'assignee_id' => $assignee->id,
         'due_date' => today(),
     ]);
 
-    $futureTask = Task::factory()->create([
-        'project_id' => $project->id,
-        'assignee_id' => $assignee->id,
-        'due_date' => today()->addDays(5),
-    ]);
-
     $this->artisan('tasks:send-due-date-reminders')
-        ->assertSuccessful();
+        ->assertExitCode(0);
 
     Queue::assertPushed(
         SendDueDateReminder::class,
-        1
-    );
-
-    Queue::assertPushed(
-        SendDueDateReminder::class,
-        function (SendDueDateReminder $job) use ($dueSoonTask) {
-            return $job->task->id === $dueSoonTask->id;
-        }
+        fn ($job) => $job->task->id === $task->id
     );
 });
 
-test('unassigned due soon tasks are not dispatched', function () {
+test('command dispatches reminders for tasks due tomorrow', function () {
+    Queue::fake();
+
+    $owner = User::factory()->create();
+
+    $company = Company::factory()->create([
+        'owner_id' => $owner->id,
+    ]);
+
+    $owner->update([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $assignee = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $task = Task::factory()->create([
+        'project_id' => $project->id,
+        'assignee_id' => $assignee->id,
+        'due_date' => today()->addDay(),
+    ]);
+
+    $this->artisan('tasks:send-due-date-reminders')
+        ->assertExitCode(0);
+
+    Queue::assertPushed(
+        SendDueDateReminder::class,
+        fn ($job) => $job->task->id === $task->id
+    );
+});
+
+test('command ignores tasks without an assignee', function () {
     Queue::fake();
 
     $owner = User::factory()->create();
@@ -83,9 +108,77 @@ test('unassigned due soon tasks are not dispatched', function () {
     ]);
 
     $this->artisan('tasks:send-due-date-reminders')
-        ->assertSuccessful();
+        ->assertExitCode(0);
 
-    Queue::assertNotPushed(
-        SendDueDateReminder::class
-    );
+    Queue::assertNothingPushed();
+});
+
+test('command ignores tasks without a due date', function () {
+    Queue::fake();
+
+    $owner = User::factory()->create();
+
+    $company = Company::factory()->create([
+        'owner_id' => $owner->id,
+    ]);
+
+    $owner->update([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $assignee = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'assignee_id' => $assignee->id,
+        'due_date' => null,
+    ]);
+
+    $this->artisan('tasks:send-due-date-reminders')
+        ->assertExitCode(0);
+
+    Queue::assertNothingPushed();
+});
+
+test('command does not dispatch tasks outside the due soon window', function () {
+    Queue::fake();
+
+    $owner = User::factory()->create();
+
+    $company = Company::factory()->create([
+        'owner_id' => $owner->id,
+    ]);
+
+    $owner->update([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $assignee = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'assignee_id' => $assignee->id,
+        'due_date' => today()->addDays(3),
+    ]);
+
+    $this->artisan('tasks:send-due-date-reminders')
+        ->assertExitCode(0);
+
+    Queue::assertNothingPushed();
 });
