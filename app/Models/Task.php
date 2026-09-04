@@ -38,4 +38,9 @@ class Task extends Model
     public function activities(): HasMany{
         return $this->hasMany(Activity::class);
     }
+
+    public function dueDateReminders(): HasMany
+{
+    return $this->hasMany(DueDateReminder::class);
+}
 }
