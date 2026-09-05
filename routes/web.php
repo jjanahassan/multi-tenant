@@ -5,7 +5,6 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BoardColumnController;
 use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NotificationController;
