@@ -25,7 +25,12 @@ test('authenticated user can access the api', function () {
         ]);
 });
 
-test('unauthenticated user cannot access protected api routes', function () {
-    $this->getJson('/api/v1/test')
-        ->assertUnauthorized();
+test('unauthenticated api request returns a json error', function () {
+    $response = $this->getJson('/api/v1/test');
+
+    $response
+        ->assertUnauthorized()
+        ->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
 });
