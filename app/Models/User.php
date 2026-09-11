@@ -67,4 +67,20 @@ class User extends Authenticatable
     public function assignedTasks(): HasMany{
         return $this->hasMany(Task::class, 'assignee_id');
     }
+
+    public function createCompanyToken(string $name)
+    {
+        if (! $this->company_id) {
+            throw new \RuntimeException(
+                'User must belong to a company to create an API token.'
+            );
+        }
+
+        $token = $this->createToken($name);
+
+        $token->accessToken->company_id = $this->company_id;
+        $token->accessToken->save();
+
+        return $token;
+    }
 }

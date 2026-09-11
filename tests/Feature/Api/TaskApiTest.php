@@ -5,7 +5,6 @@ use App\Models\Company;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 
 test('authenticated user can list tasks for a project in their company', function () {
     $company = Company::factory()->create();
@@ -23,9 +22,9 @@ test('authenticated user can list tasks for a project in their company', functio
         'project_id' => $project->id,
     ]);
 
-    Sanctum::actingAs($user);
+    $token = $user->createCompanyToken('test-token');
 
-    $response = $this->getJson(
+    $response = $this->withToken($token->plainTextToken)->getJson(
         route('api.v1.projects.tasks.index', $project)
     );
 
@@ -50,9 +49,9 @@ test('authenticated user can create a task through the api', function () {
         'project_id' => $project->id,
     ]);
 
-    Sanctum::actingAs($user);
+    $token = $user->createCompanyToken('test-token');
 
-    $response = $this->postJson(
+    $response = $this->withToken($token->plainTextToken)->postJson(
         route('api.v1.projects.tasks.store', $project),
         [
             'title' => 'API Task',
@@ -89,9 +88,9 @@ test('authenticated user can view a task through the api', function () {
         'project_id' => $project->id,
     ]);
 
-    Sanctum::actingAs($user);
+    $token = $user->createCompanyToken('test-token');
 
-    $response = $this->getJson(
+    $response = $this->withToken($token->plainTextToken)->getJson(
         route('api.v1.tasks.show', $task)
     );
 
@@ -122,9 +121,9 @@ test('authenticated owner can update a task through the api', function () {
         'project_id' => $project->id,
     ]);
 
-    Sanctum::actingAs($user);
+    $token = $user->createCompanyToken('test-token');
 
-    $response = $this
+    $response = $this->withToken($token->plainTextToken)
     ->putJson("/api/v1/tasks/{$task->id}", [
         'title' => 'Updated title',
         'description' => $task->description,
@@ -159,9 +158,9 @@ test('authenticated owner can delete a task through the api', function () {
         'project_id' => $project->id,
     ]);
 
-    Sanctum::actingAs($user);
+    $token = $user->createCompanyToken('test-token');
 
-    $response = $this->deleteJson(
+    $response = $this->withToken($token->plainTextToken)->deleteJson(
         route('api.v1.tasks.destroy', $task)
     );
 
@@ -193,9 +192,9 @@ test('api user cannot access a task belonging to another company', function () {
         'project_id' => $projectB->id,
     ]);
 
-    Sanctum::actingAs($userA);
+    $token = $userA->createCompanyToken('test-token');
 
-    $response = $this->getJson(
+    $response = $this->withToken($token->plainTextToken)->getJson(
         route('api.v1.tasks.show', $taskB)
     );
 
@@ -219,9 +218,9 @@ test('api user cannot list tasks from another company project', function () {
         'project_id' => $projectB->id,
     ]);
 
-    Sanctum::actingAs($userA);
+    $token = $userA->createCompanyToken('test-token');
 
-    $response = $this->getJson(
+    $response = $this->withToken($token->plainTextToken)->getJson(
         route('api.v1.projects.tasks.index', $projectB)
     );
 

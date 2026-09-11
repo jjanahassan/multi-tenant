@@ -15,7 +15,7 @@ test('authenticated user can access the api', function () {
         'role' => 'owner',
     ]);
 
-    $token = $user->createToken('test-token')->plainTextToken;
+    $token = $user->createCompanyToken('test-token')->plainTextToken;
 
     $this->withToken($token)
         ->getJson('/api/v1/test')
