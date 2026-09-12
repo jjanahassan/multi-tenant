@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/projects/{{project_id}}"
+method: GET
+headers:
+  Accept: application/json
+  Authorization: Bearer {{token}}
+order: 3000

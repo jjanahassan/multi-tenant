@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/tasks/{{task_id}}"
+method: PUT
+headers:
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "Postman Task",
+      "description": "Moved through Postman.",
+      "board_column_id": {{done_column_id}},
+      "assignee_id": null,
+      "due_date": null
+    }
+order: 4000

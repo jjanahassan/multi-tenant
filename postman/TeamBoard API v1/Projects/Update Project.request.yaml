@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/projects/{{project_id}}"
+method: PUT
+headers:
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Updated Postman Project",
+      "description": "Updated through Postman."
+    }
+order: 4000
