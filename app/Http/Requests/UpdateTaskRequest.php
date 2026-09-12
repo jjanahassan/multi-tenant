@@ -13,9 +13,16 @@ class UpdateTaskRequest extends FormRequest
      */
     public function authorize(): bool
     {
-         $project= $this->route('project');
+        $task = $this->route('task');
 
-        return $project && $this->user() && $this->user()->company_id === $project->company_id;
+        if (!$task || !$this->user()) {
+            return false;
+        }
+
+        $project = $this->route('project') ?? $task->project;
+
+        return $project
+            && $this->user()->company_id === $project->company_id;
     }
 
     /**
@@ -25,20 +32,39 @@ class UpdateTaskRequest extends FormRequest
      */
     public function rules(): array
     {
-       $project = $this->route('project');
+        $task = $this->route('task');
+        $project = $this->route('project') ?? $task?->project;
 
         return [
-            'title'=> ['required', 'string', 'max:255', ],
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-            'description'=> ['nullable', 'string', ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
 
-            'board_column_id'=> ['required', 'integer',
-            Rule::exists('board_columns', 'id')-> where('project_id', $project?->id), ],
+            'board_column_id' => [
+                'required',
+                'integer',
+                Rule::exists('board_columns', 'id')
+                    ->where('project_id', $project?->id),
+            ],
 
-            'assignee_id'=> ['nullable', 'integer', 
-            Rule::exists('users', 'id')-> where('company_id', $project?->company_id), ],
+            'assignee_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')
+                    ->where('company_id', $project?->company_id),
+            ],
 
-            'due_date'=> ['nullable', 'date', ],
-        ]; 
+            'due_date' => [
+                'nullable',
+                'date',
+            ],
+        ];
     }
 }

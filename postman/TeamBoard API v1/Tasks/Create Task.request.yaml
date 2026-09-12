@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/projects/{{project_id}}/tasks"
+method: POST
+headers:
+  Accept: application/json
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "Postman Task",
+      "description": "Created through Postman.",
+      "board_column_id": {{todo_column_id}},
+      "assignee_id": null,
+      "due_date": null
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Task created', function () {
+          pm.response.to.have.status(201);
+      });
+
+      const json = pm.response.json();
+      pm.collectionVariables.set('task_id', json.data.id);
+    language: text/javascript
+order: 2000

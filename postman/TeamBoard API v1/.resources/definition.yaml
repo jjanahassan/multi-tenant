@@ -1,0 +1,9 @@
+$kind: collection
+description: Postman collection for the TeamBoard Laravel API v1.
+variables:
+  base_url: http://127.0.0.1:8000
+  token: ""
+  project_id: ""
+  task_id: ""
+  todo_column_id: ""
+  done_column_id: ""
