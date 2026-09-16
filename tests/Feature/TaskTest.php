@@ -713,3 +713,15 @@ test('task board does not have an n plus one query problem', function () {
 
     expect(count($queries))->toBeLessThan(15);
 });
+
+test('tasks table has an index for due date filtering', function () {
+    $indexes = \DB::select("PRAGMA index_list('tasks')");
+
+    $indexNames = collect($indexes)
+        ->pluck('name')
+        ->values()
+        ->all();
+
+    expect($indexNames)
+        ->toContain('tasks_due_date_index');
+});
