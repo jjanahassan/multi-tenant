@@ -7,7 +7,7 @@ use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Http\Requests\TaskFilterRequest;
 
 class ProjectController extends Controller
 {
@@ -65,43 +65,62 @@ class ProjectController extends Controller
      * Display the specified project.
      */
 
-public function show(Request $request, Project $project)
+public function show(TaskFilterRequest $request, Project $project)
     {
-        $users = $project->company->users;
+        $filters = $request->validated();
 
-        $assigneeId = $request->input('assignee_id');
-        $dueDate = $request->input('due_date');
-        $sortDueDate = $request->input('sort_due_date');
+        $search = $filters['search'] ?? null;
+        $assigneeId = $filters['assignee_id'] ?? null;
+        $dueFrom = $filters['due_from'] ?? null;
+        $dueTo = $filters['due_to'] ?? null;
+        $columnId = $filters['column_id'] ?? null;
+        $sortDueDate = $filters['sort_due_date'] ?? null;
 
         $project->load([
             'boardColumns' => function ($columnQuery) use (
+                $search,
                 $assigneeId,
-                $dueDate,
+                $dueFrom,
+                $dueTo,
+                $columnId,
                 $sortDueDate
             ) {
+                if ($columnId) {
+                    $columnQuery->where('id', $columnId);
+                }
+
                 $columnQuery->with([
                     'tasks' => function ($taskQuery) use (
+                        $search,
                         $assigneeId,
-                        $dueDate,
+                        $dueFrom,
+                        $dueTo,
                         $sortDueDate
                     ) {
-                        /*
-                        * Filter by assignee
-                        */
+                        if ($search) {
+                            $taskQuery->where(function ($query) use ($search) {
+                                $query
+                                    ->where('title', 'like', '%' . $search . '%')
+                                    ->orWhere(
+                                        'description',
+                                        'like',
+                                        '%' . $search . '%'
+                                    );
+                            });
+                        }
+
                         if ($assigneeId) {
                             $taskQuery->where('assignee_id', $assigneeId);
                         }
 
-                        /*
-                        * Filter by exact due date
-                        */
-                        if ($dueDate) {
-                            $taskQuery->whereDate('due_date', $dueDate);
+                        if ($dueFrom) {
+                            $taskQuery->whereDate('due_date', '>=', $dueFrom);
                         }
 
-                        /*
-                        * Sort by due date
-                        */
+                        if ($dueTo) {
+                            $taskQuery->whereDate('due_date', '<=', $dueTo);
+                        }
+
                         if ($sortDueDate === 'asc') {
                             $taskQuery->orderByRaw(
                                 'due_date IS NULL, due_date ASC'
@@ -112,27 +131,24 @@ public function show(Request $request, Project $project)
                             );
                         }
 
-                        /*
-                        * Always use position as the secondary ordering.
-                        */
-                        $taskQuery->orderBy('position');
-
-                        /*
-                        * Load comments and their users.
-                        */
-                        $taskQuery->with([
-                            'comments.user',
-                        ]);
+                        $taskQuery
+                            ->orderBy('position')
+                            ->with(['comments.user']);
                     },
                 ]);
             },
         ]);
 
+        $users = $project->company->users;
+
         return view('projects.show', compact(
             'project',
             'users',
+            'search',
             'assigneeId',
-            'dueDate',
+            'dueFrom',
+            'dueTo',
+            'columnId',
             'sortDueDate'
         ));
     }

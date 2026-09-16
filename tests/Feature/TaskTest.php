@@ -280,90 +280,6 @@ test('user cannot update a task through another project', function () {
     $response->assertNotFound();
 });
 
-test('user can filter tasks by assignee', function () {
-    $company = Company::factory()->create();
-
-    $user = User::factory()->create([
-        'company_id' => $company->id,
-    ]);
-
-    $assigneeOne = User::factory()->create([
-        'company_id' => $company->id,
-    ]);
-
-    $assigneeTwo = User::factory()->create([
-        'company_id' => $company->id,
-    ]);
-
-    $project = Project::factory()->create([
-        'company_id' => $company->id,
-    ]);
-
-    $column = $project->boardColumns()->first();
-
-    $taskOne = Task::factory()->create([
-        'project_id' => $project->id,
-        'board_column_id' => $column->id,
-        'assignee_id' => $assigneeOne->id,
-    ]);
-
-    $taskTwo = Task::factory()->create([
-        'project_id' => $project->id,
-        'board_column_id' => $column->id,
-        'assignee_id' => $assigneeTwo->id,
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->get(route('projects.show', [
-            'project' => $project,
-            'assignee_id' => $assigneeOne->id,
-        ]));
-
-    $response->assertOk();
-
-    $response->assertSee($taskOne->title);
-    $response->assertDontSee($taskTwo->title);
-});
-
-test('user can filter tasks by due date', function () {
-    $company = Company::factory()->create();
-
-    $user = User::factory()->create([
-        'company_id' => $company->id,
-    ]);
-
-    $project = Project::factory()->create([
-        'company_id' => $company->id,
-    ]);
-
-    $column = $project->boardColumns()->first();
-
-    $taskDueToday = Task::factory()->create([
-        'project_id' => $project->id,
-        'board_column_id' => $column->id,
-        'due_date' => '2026-09-01',
-    ]);
-
-    $taskDueLater = Task::factory()->create([
-        'project_id' => $project->id,
-        'board_column_id' => $column->id,
-        'due_date' => '2026-09-10',
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->get(route('projects.show', [
-            'project' => $project,
-            'due_date' => '2026-09-01',
-        ]));
-
-    $response->assertOk();
-
-    $response->assertSee($taskDueToday->title);
-    $response->assertDontSee($taskDueLater->title);
-});
-
 test('user can sort tasks by due date', function () {
     $company = Company::factory()->create();
 
@@ -407,4 +323,343 @@ test('user can sort tasks by due date', function () {
     )->toBeLessThan(
         strpos($content, 'Later Task')
     );
+});
+
+test('tasks can be searched by title', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'title' => 'Fix authentication bug',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'title' => 'Write documentation',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'search' => 'authentication',
+        ]))
+        ->assertOk()
+        ->assertSee('Fix authentication bug')
+        ->assertDontSee('Write documentation');
+});
+
+test('tasks can be searched by description', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'title' => 'Task One',
+        'description' => 'Important payment integration work',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'title' => 'Task Two',
+        'description' => 'Update the homepage content',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'search' => 'payment integration',
+        ]))
+        ->assertOk()
+        ->assertSee('Task One')
+        ->assertDontSee('Task Two');
+});
+
+test('tasks can be filtered by assignee', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $assigneeA = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $assigneeB = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'assignee_id' => $assigneeA->id,
+        'title' => 'Assigned to A',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'assignee_id' => $assigneeB->id,
+        'title' => 'Assigned to B',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'assignee_id' => $assigneeA->id,
+        ]))
+        ->assertOk()
+        ->assertSee('Assigned to A')
+        ->assertDontSee('Assigned to B');
+});
+
+test('tasks can be filtered by due date range', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'due_date' => '2026-09-10',
+        'title' => 'Before range',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'due_date' => '2026-09-15',
+        'title' => 'Inside range',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $column->id,
+        'due_date' => '2026-09-25',
+        'title' => 'After range',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'due_from' => '2026-09-12',
+            'due_to' => '2026-09-20',
+        ]))
+        ->assertOk()
+        ->assertSee('Inside range')
+        ->assertDontSee('Before range')
+        ->assertDontSee('After range');
+});
+
+test('tasks can be filtered by board column', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $todo = $project->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    $done = $project->boardColumns()
+        ->where('name', 'Done')
+        ->firstOrFail();
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $todo->id,
+        'title' => 'Todo task',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $done->id,
+        'title' => 'Done task',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'column_id' => $done->id,
+        ]))
+        ->assertOk()
+        ->assertSee('Done task')
+        ->assertDontSee('Todo task');
+});
+
+test('task filters can be combined', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $targetAssignee = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $otherAssignee = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'member',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $todo = $project->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    $done = $project->boardColumns()
+        ->where('name', 'Done')
+        ->firstOrFail();
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $todo->id,
+        'assignee_id' => $targetAssignee->id,
+        'title' => 'Matching authentication task',
+        'description' => 'Authentication work for the API',
+        'due_date' => '2026-09-15',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $todo->id,
+        'assignee_id' => $targetAssignee->id,
+        'title' => 'Wrong date authentication task',
+        'description' => 'Authentication work',
+        'due_date' => '2026-10-01',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $done->id,
+        'assignee_id' => $targetAssignee->id,
+        'title' => 'Wrong column authentication task',
+        'description' => 'Authentication work',
+        'due_date' => '2026-09-15',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $todo->id,
+        'assignee_id' => $otherAssignee->id,
+        'title' => 'Wrong assignee authentication task',
+        'description' => 'Authentication work',
+        'due_date' => '2026-09-15',
+    ]);
+
+    Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $todo->id,
+        'assignee_id' => $targetAssignee->id,
+        'title' => 'Unrelated task',
+        'description' => 'Something completely different',
+        'due_date' => '2026-09-15',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $project,
+            'search' => 'authentication',
+            'assignee_id' => $targetAssignee->id,
+            'due_from' => '2026-09-01',
+            'due_to' => '2026-09-20',
+            'column_id' => $todo->id,
+        ]))
+        ->assertOk()
+        ->assertSee('Matching authentication task')
+        ->assertDontSee('Wrong date authentication task')
+        ->assertDontSee('Wrong column authentication task')
+        ->assertDontSee('Wrong assignee authentication task')
+        ->assertDontSee('Unrelated task');
+});
+
+test('filter validation prevents selecting a board column from another project', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $projectA = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $projectB = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $columnB = $projectB->boardColumns()
+        ->where('name', 'To Do')
+        ->firstOrFail();
+
+    $this->actingAs($user)
+        ->get(route('projects.show', [
+            'project' => $projectA,
+            'column_id' => $columnB->id,
+        ]))
+        ->assertSessionHasErrors('column_id');
 });
