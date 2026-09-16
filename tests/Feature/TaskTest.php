@@ -663,3 +663,53 @@ test('filter validation prevents selecting a board column from another project',
         ]))
         ->assertSessionHasErrors('column_id');
 });
+
+test('task board does not have an n plus one query problem', function () {
+    $company = \App\Models\Company::factory()->create();
+
+    $user = \App\Models\User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $company->update([
+        'owner_id' => $user->id,
+    ]);
+
+    $project = \App\Models\Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()->first();
+
+    \App\Models\Task::factory()
+        ->count(20)
+        ->create([
+            'project_id' => $project->id,
+            'board_column_id' => $column->id,
+            'assignee_id' => $user->id,
+        ]);
+
+    \DB::enableQueryLog();
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('projects.show', $project));
+
+    $response->assertSuccessful();
+
+    $queries = \DB::getQueryLog();
+
+    $assigneeQueries = collect($queries)
+        ->filter(
+            fn ($query) =>
+                str_contains(
+                    strtolower($query['query']),
+                    'select * from "users" where "users"."id"'
+                )
+        );
+
+    expect($assigneeQueries)->toHaveCount(1);
+
+    expect(count($queries))->toBeLessThan(15);
+});

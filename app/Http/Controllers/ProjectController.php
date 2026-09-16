@@ -133,7 +133,7 @@ public function show(TaskFilterRequest $request, Project $project)
 
                         $taskQuery
                             ->orderBy('position')
-                            ->with(['comments.user']);
+                            ->with(['assignee', 'comments.user']);
                     },
                 ]);
             },
