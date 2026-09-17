@@ -1,0 +1,13 @@
+# Use this workspace to collaborate
+workspace:
+  id: 7d3395aa-0695-44ba-8e8a-a825e89dfd93
+
+localResources:
+  collections:
+    - ../TeamBoard API v1
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../TeamBoard API v1: teamboard-api-v1

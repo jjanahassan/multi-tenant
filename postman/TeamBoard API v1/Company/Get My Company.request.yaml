@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{base_url}}/api/v1/company"
+method: GET
+headers:
+  Accept: application/json
+  Authorization: Bearer {{token}}
+order: 1000

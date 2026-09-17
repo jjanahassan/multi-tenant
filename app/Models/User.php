@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $id
@@ -32,7 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * Get the attributes that should be cast.
@@ -65,5 +66,21 @@ class User extends Authenticatable
 
     public function assignedTasks(): HasMany{
         return $this->hasMany(Task::class, 'assignee_id');
+    }
+
+    public function createCompanyToken(string $name)
+    {
+        if (! $this->company_id) {
+            throw new \RuntimeException(
+                'User must belong to a company to create an API token.'
+            );
+        }
+
+        $token = $this->createToken($name);
+
+        $token->accessToken->company_id = $this->company_id;
+        $token->accessToken->save();
+
+        return $token;
     }
 }
