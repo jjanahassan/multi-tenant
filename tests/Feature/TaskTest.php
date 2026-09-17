@@ -725,3 +725,49 @@ test('tasks table has an index for due date filtering', function () {
     expect($indexNames)
         ->toContain('tasks_due_date_index');
 });
+
+test('task board remains efficient with a large number of tasks', function () {
+    $company = \App\Models\Company::factory()->create();
+
+    $user = \App\Models\User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'owner',
+    ]);
+
+    $company->update([
+        'owner_id' => $user->id,
+    ]);
+
+    $project = \App\Models\Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $column = $project->boardColumns()->first();
+
+    \App\Models\Task::factory()
+        ->count(1000)
+        ->create([
+            'project_id' => $project->id,
+            'board_column_id' => $column->id,
+            'assignee_id' => $user->id,
+        ]);
+
+    \DB::enableQueryLog();
+
+    $start = microtime(true);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('projects.show', $project));
+
+    $duration = microtime(true) - $start;
+
+    $response->assertSuccessful();
+
+    $queryCount = count(\DB::getQueryLog());
+
+    dump('Board load time: ' . round($duration * 1000, 2) . ' ms');
+    dump('Board query count: ' . $queryCount);
+
+    expect($queryCount)->toBeLessThan(15);
+});
