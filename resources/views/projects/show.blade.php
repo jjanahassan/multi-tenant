@@ -106,127 +106,105 @@
             {{-- ========================= --}}
             {{-- TASK FILTERS --}}
             {{-- ========================= --}}
-            <div class="mb-6 p-5 bg-white border rounded-lg shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-lg font-semibold">
-                            Task Filters
-                        </h2>
-                        <p class="text-sm text-gray-500">
-                            Filter and sort the tasks on this board.
-                        </p>
-                    </div>
+            <form method="GET" action="{{ route('projects.show', $project) }}">
+                <div>
+                    <label for="search">Search</label>
 
-                    <a
-                        href="{{ route('projects.show', $project) }}"
-                        class="text-sm text-gray-600 hover:text-black underline"
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        value="{{ $search }}"
+                        placeholder="Search tasks..."
                     >
-                        Clear filters
-                    </a>
                 </div>
 
-                <form
-                    method="GET"
-                    action="{{ route('projects.show', $project) }}"
-                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end"
-                >
+                <div>
+                    <label for="assignee_id">Assignee</label>
 
-                    {{-- Assignee --}}
-                    <div>
-                        <label
-                            for="assignee_id"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Assignee
-                        </label>
+                    <select id="assignee_id" name="assignee_id">
+                        <option value="">All assignees</option>
 
-                        <select
-                            id="assignee_id"
-                            name="assignee_id"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
-                        >
-                            <option value="">
-                                All assignees
-                            </option>
-
-                            @foreach ($users as $user)
-                                <option
-                                    value="{{ $user->id }}"
-                                    @selected(request('assignee_id') == $user->id)
-                                >
-                                    {{ $user->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Due Date --}}
-                    <div>
-                        <label
-                            for="due_date"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Due Date
-                        </label>
-
-                        <input
-                            id="due_date"
-                            type="date"
-                            name="due_date"
-                            value="{{ request('due_date') }}"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2"
-                        >
-                    </div>
-
-                    {{-- Sort --}}
-                    <div>
-                        <label
-                            for="sort"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Sort by Due Date
-                        </label>
-
-                        <select
-                            id="sort"
-                            name="sort_due_date"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
-                        >
+                        @foreach ($users as $user)
                             <option
-                                value=""
-                                @selected(!request('sort'))
+                                value="{{ $user->id }}"
+                                @selected((string) $assigneeId === (string) $user->id)
                             >
-                                Default
+                                {{ $user->name }}
                             </option>
+                        @endforeach
+                    </select>
+                </div>
 
+                <div>
+                    <label for="due_from">Due from</label>
+
+                    <input
+                        type="date"
+                        id="due_from"
+                        name="due_from"
+                        value="{{ $dueFrom }}"
+                    >
+                </div>
+
+                <div>
+                    <label for="due_to">Due to</label>
+
+                    <input
+                        type="date"
+                        id="due_to"
+                        name="due_to"
+                        value="{{ $dueTo }}"
+                    >
+                </div>
+
+                <div>
+                    <label for="column_id">Column</label>
+
+                    <select id="column_id" name="column_id">
+                        <option value="">All columns</option>
+
+                        @foreach ($project->boardColumns as $column)
                             <option
-                                value="asc"
-                                @selected(request('sort') === 'asc')
+                                value="{{ $column->id }}"
+                                @selected((string) $columnId === (string) $column->id)
                             >
-                                Earliest first
+                                {{ $column->name }}
                             </option>
+                        @endforeach
+                    </select>
+                </div>
 
-                            <option
-                                value="desc"
-                                @selected(request('sort') === 'desc')
-                            >
-                                Latest first
-                            </option>
-                        </select>
-                    </div>
+                <div>
+                    <label for="sort_due_date">Sort by due date</label>
 
-                    {{-- Apply --}}
-                    <div>
-                        <button
-                            type="submit"
-                            class="w-full px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
+                    <select id="sort_due_date" name="sort_due_date">
+                        <option value="">Default</option>
+
+                        <option
+                            value="asc"
+                            @selected($sortDueDate === 'asc')
                         >
-                            Apply Filters
-                        </button>
-                    </div>
+                            Earliest first
+                        </option>
 
-                </form>
-            </div>
+                        <option
+                            value="desc"
+                            @selected($sortDueDate === 'desc')
+                        >
+                            Latest first
+                        </option>
+                    </select>
+                </div>
+
+                <button type="submit">
+                    Apply Filters
+                </button>
+
+                <a href="{{ route('projects.show', $project) }}">
+                    Clear
+                </a>
+            </form>
 
             {{-- Kanban Board --}}
             <div class="flex gap-4 overflow-x-auto pb-4">

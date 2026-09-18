@@ -1,1102 +1,1808 @@
 # Multi-Tenant Laravel Application
 
-A multi-tenant Laravel application with company-based authentication, role-based authorization, tenant data isolation, project management, customizable Kanban boards, tasks, comments, activity tracking, notifications, background jobs, and a versioned public JSON API using Laravel Sanctum.
+A multi-tenant Laravel application with company-based authentication, role-based authorization, tenant data isolation, project management, customizable Kanban boards, tasks, comments, activity tracking, database notifications, background jobs, due-date reminders, and a versioned public JSON API using Laravel Sanctum.
 
 ## 🚀 Features
 
 - **Multi-Tenant Architecture**: Each user belongs to a company and tenant data is isolated by company.
-- **Authentication**: Registration, Login, Logout using Laravel Fortify.
+- **Authentication**: Registration, Login, Logout with Laravel Fortify.
 - **Company Creation**: New users automatically create their own company.
 - **Company Owner**: The first registered user becomes the company owner.
-- **Role-Based Authorization**: Supports owner, admin, and member roles.
+- **Role-Based Authorization**: Supports `owner`, `admin`, and `member` roles.
 - **Tenant Isolation**: Users can only access data belonging to their own company.
-- **Project Management**: Create, view, update, and delete projects.
-- **Customizable Kanban Boards**: Each project has configurable board columns.
-- **Task Management**: Create, update, move, assign, filter, and delete tasks.
-- **Task Comments**: Users can comment on tasks.
-- **Activity Tracking**: Important task actions are recorded in an activity log.
-- **Database Notifications**: Users receive notifications for relevant task activity.
-- **Background Jobs**: Due-date reminder notifications are processed asynchronously using Laravel queues.
-- **Scheduled Commands**: Due-date reminder jobs are dispatched through Laravel's scheduler.
-- **Public JSON API**: Versioned `/api/v1` API for mobile and third-party integrations.
-- **API Token Authentication**: Laravel Sanctum bearer tokens.
-- **Company-Bound API Tokens**: Each API token is restricted to the user's company.
-- **API Resources**: Consistent JSON resource structures for companies, projects, and tasks.
+- **Policies & Gates**: Backend authorization is enforced using Laravel Policies and Gates.
+- **Company Switching**: Users can switch between their available companies.
+- **Team Invitations**: Owners and admins can invite teammates with a selected role.
+- **Queued Invitations**: Invitations dispatch a queued job for future email delivery.
+- **Projects**: Company-scoped project CRUD.
+- **Kanban Boards**: Each project has a customizable Kanban board.
+- **Board Columns**: Columns can be added, renamed, deleted, and reordered.
+- **Default Columns**: New projects automatically receive `To Do`, `In Progress`, and `Done`.
+- **Tasks**: Create, update, delete, assign, move, and reorder tasks.
+- **Task Assignment**: Tasks can only be assigned to users from the same company.
+- **Due Dates**: Tasks support optional due dates.
+- **Drag & Drop**: Tasks can be moved between Kanban columns.
+- **AJAX Movement**: Task movement is persisted asynchronously without a full page reload.
+- **Task Search**: Search tasks by title and description.
+- **Task Filtering**: Filter by assignee, due-date range, and board column.
+- **Due-Date Sorting**: Sort tasks by due date ascending or descending.
+- **Combined Filters**: Search and filtering conditions can be combined.
+- **Comments**: Users can add comments to tasks.
+- **Activity Tracking**: Task creation, movement, assignment, and comments are recorded.
+- **Database Notifications**: Users receive notifications for task assignments, comments, and due-date reminders.
+- **Notification Read State**: Notifications can be marked as read using persistent `read_at` values.
+- **Background Jobs**: Time-consuming operations are processed asynchronously.
+- **Database Queue**: Laravel's database queue is used for background jobs.
+- **Due-Date Reminders**: Tasks approaching their due date generate reminder notifications.
+- **Scheduled Commands**: Laravel Scheduler automatically checks for due-soon tasks.
+- **Retry & Backoff**: Reminder jobs retry automatically when processing fails.
+- **Failed Job Handling**: Permanently failed jobs are stored in `failed_jobs`.
+- **Idempotent Reminders**: Reminder processing prevents duplicate notifications.
+- **Public JSON API**: Versioned API available under `/api/v1`.
+- **Sanctum Authentication**: API access uses Laravel Sanctum bearer tokens.
+- **Company-Bound API Tokens**: API access remains restricted to the user's company.
 - **API Rate Limiting**: Authenticated API requests are limited to 60 requests per minute.
-- **Postman Collection**: API requests are included for manual API testing.
-
----
+- **API Resources**: Dedicated Laravel API Resources provide consistent JSON responses.
+- **Large Dataset Seeder**: Generates 25,000 tasks across multiple companies and projects.
+- **N+1 Optimization**: Task assignees are eager-loaded to prevent repeated queries.
+- **Database Indexing**: Indexes were added based on actual filtering and sorting requirements.
+- **Performance Testing**: Board query count and load time are measured with large task datasets.
+- **Feature Testing**: Authentication, authorization, tenant isolation, projects, tasks, comments, notifications, queues, API functionality, and performance are covered by tests.
 
 ## 🛠️ Tech Stack
 
-- **Laravel 13**
-- **PHP 8.5**
-- **SQLite**
-- **Laravel Fortify**
-- **Laravel Sanctum**
-- **Blade**
-- **Livewire / Flux**
-- **Pest**
-- **Laravel Queues**
-- **Laravel Scheduler**
-- **RESTful JSON API**
+- **Framework**: Laravel 13
+- **Language**: PHP
+- **Authentication**: Laravel Fortify
+- **API Authentication**: Laravel Sanctum
+- **Frontend**: Blade
+- **Database**: SQLite
+- **Queue**: Laravel Database Queue
+- **Testing**: Pest
+- **Build Tool**: Vite
+- **Package Manager**: Composer / NPM
 
----
+## 📋 Requirements
 
-# 🏢 Multi-Tenant Architecture
+- PHP >= 8.2
+- Composer
+- Node.js & NPM
+- SQLite or MySQL
 
-The application uses a company-based multi-tenant architecture.
+## 🛠️ Installation
 
-Each user belongs to a company through:
+### 1. Clone the Repository
 
-    users.company_id
+```bash
+git clone https://github.com/jjanahassan/multi-tenant.git
+cd multi-tenant
+```
 
-Company-owned records are associated with their company.
+### 2. Install PHP Dependencies
 
-Tenant isolation is enforced through:
+```bash
+composer install
+```
 
-- Company-scoped models where appropriate.
-- Laravel Policies.
-- Authorization checks.
-- Relationship-based tenant checks.
-- API token company binding.
+### 3. Install Frontend Dependencies
 
-Users cannot access another company's projects or related data.
+```bash
+npm install
+```
 
----
+### 4. Create the Environment File
 
-# 🔐 Authentication
+```bash
+cp .env.example .env
+```
 
-Authentication is implemented using Laravel Fortify.
+For Windows PowerShell:
 
-Supported authentication functionality includes:
+```powershell
+Copy-Item .env.example .env
+```
 
-- User registration.
-- User login.
-- User logout.
-- Company creation during registration.
-- Automatic assignment of the registering user as company owner.
+### 5. Generate the Application Key
 
-When a user registers:
+```bash
+php artisan key:generate
+```
 
-1. A company is created.
-2. The user is assigned to the company.
-3. The user receives the `owner` role.
-4. The company's `owner_id` is assigned to the user.
+### 6. Configure the Database
 
----
+The application uses SQLite by default.
 
-# 👥 Roles and Permissions
+Create:
 
-The application supports three roles:
+```text
+database/database.sqlite
+```
 
-    owner
-    admin
-    member
+Then configure `.env`:
 
-### Owner
+```env
+DB_CONNECTION=sqlite
+```
 
-The owner has full company-level permissions, including:
+### 7. Configure the Queue
 
-- Managing company members.
-- Inviting users.
-- Removing users.
-- Creating projects.
-- Updating projects.
-- Deleting projects.
-- Managing company resources.
+The application uses Laravel's database queue:
 
-### Admin
+```env
+QUEUE_CONNECTION=database
+```
 
-Admins can manage operational company resources such as:
+### 8. Run Migrations
 
-- Projects.
-- Tasks.
-- Invitations.
+```bash
+php artisan migrate
+```
 
-### Member
+### 9. Build Frontend Assets
 
-Members have restricted access based on the relevant policy.
+```bash
+npm run build
+```
 
-Authorization is enforced server-side using Laravel Policies and Gates rather than relying only on UI restrictions.
+### 10. Start the Application
 
----
+```bash
+php artisan serve
+```
 
-# 📁 Project Management
+The application will be available at:
 
-Projects belong to a company.
+```text
+http://127.0.0.1:8000
+```
 
-A project contains:
+For frontend development:
 
-- Name.
-- Description.
-- Company.
-- Board columns.
-- Tasks.
+```bash
+npm run dev
+```
 
-Project CRUD functionality includes:
+### 11. Start the Queue Worker
 
-    GET    /projects
-    GET    /projects/create
-    POST   /projects
-    GET    /projects/{project}
-    GET    /projects/{project}/edit
-    PUT    /projects/{project}
-    DELETE /projects/{project}
+Background jobs require a running queue worker:
 
-Projects are restricted to the authenticated user's company.
+```bash
+php artisan queue:work
+```
 
----
+## 🗄️ Database Structure
 
-# 📋 Kanban Boards
+### Companies
 
-Each project automatically receives default board columns when it is created:
+The `companies` table represents each tenant.
 
-    To Do
-    In Progress
-    Done
+| Column | Type | Description |
+|---|---|---|
+| `id` | bigint | Primary key |
+| `name` | string | Company name |
+| `owner_id` | bigint | Company owner |
+| `is_active` | boolean | Whether the company is active |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Update timestamp |
 
-Board columns support:
+### Users
 
-- Creation.
-- Renaming.
-- Deletion.
-- Reordering.
+Users belong to a company through `company_id`.
 
-Each board column belongs to a project.
-
-Tasks can be moved between columns by updating their `board_column_id`.
-
----
-
-# ✅ Task Management
-
-Tasks belong to projects.
-
-Task fields include:
-
-- Title.
-- Description.
-- Project.
-- Board column.
-- Assignee.
-- Due date.
-- Position.
-
-Tasks support:
-
-- Creation.
-- Viewing.
-- Updating.
-- Assignment.
-- Due dates.
-- Reordering.
-- Moving between board columns.
-- Deletion.
-
-Task access is authorized through the task's project and company relationship.
-
----
-
-# 💬 Comments
-
-Users can add comments to tasks.
-
-Comments are associated with their commentable resource and include the user who created the comment.
-
-Comment functionality supports:
-
-- Creating comments.
-- Displaying comments.
-- Associating comments with tasks.
-- Recording comment activity.
-
----
-
-# 📊 Activity Tracking
-
-The application records important task activity.
-
-Examples include:
-
-- Task created.
-- Task assigned.
-- Task moved.
-- Comment added.
-
-Activities are associated with the relevant task and provide a record of changes made within the application.
-
----
-
-# 🔔 Notifications
-
-The application uses Laravel database notifications.
-
-Supported notification types include:
-
-    task_assigned
-    task_commented
-
-Users can:
-
-- View notifications.
-- See unread notifications.
-- Mark notifications as read.
-
-Task assignment and commenting notifications are implemented as queued notifications.
-
----
-
-# ⚙️ Background Jobs and Queues
-
-The application uses Laravel's database queue for asynchronous background processing.
-
-Due-date reminder functionality includes:
-
-- A reminder job.
-- A scheduled Artisan command.
-- Database-backed queue processing.
-- Idempotency protection.
-- Retry handling.
-- Failure handling.
-
-The scheduled command identifies tasks requiring reminders and dispatches the corresponding jobs.
-
-Jobs are processed outside the HTTP request lifecycle.
-
----
-
-# 🕐 Task 6 — Due-Date Reminders
-
-Task 6 implemented the background-job workflow for task due-date reminders.
-
-The workflow is:
-
-    Scheduler
-        ↓
-    Reminder Command
-        ↓
-    Reminder Job
-        ↓
-    Notification
-
-The implementation uses Laravel's database queue and scheduler to process reminders asynchronously.
-
-The workflow includes protection against duplicate reminders and supports retries and failed jobs.
-
----
-
-# 🌐 Task 7 — Public JSON API + Token Authentication
-
-Task 7 adds a versioned public JSON API for mobile applications and third-party integrations using Laravel Sanctum.
-
-All API endpoints are versioned under:
-
-    /api/v1
-
-The API supports:
-
-- Sanctum token authentication.
-- Company-bound API tokens.
-- Company information.
-- Project CRUD.
-- Task CRUD.
-- Task movement between board columns.
-- API Resources.
-- JSON validation responses.
-- Authentication error responses.
-- Tenant isolation.
-- API rate limiting.
-- Postman testing.
-
----
-
-# 🔑 API Authentication
-
-API authentication uses Laravel Sanctum bearer tokens.
-
-A token can be requested using:
-
-    POST /api/v1/auth/token
-
-Request body:
-
-    {
-        "email": "user@example.com",
-        "password": "password",
-        "device_name": "Postman"
-    }
-
-A successful authentication response is:
-
-    {
-        "token": "...",
-        "token_type": "Bearer",
-        "company_id": 1
-    }
-
-The returned token is then used for authenticated API requests:
-
-    Authorization: Bearer <token>
-
-The API token is bound to the authenticated user's company.
-
-A user must belong to a company in order to create an API token.
-
----
-
-# 🏢 Company API
-
-The authenticated user's company can be retrieved using:
-
-    GET /api/v1/company
-
-This endpoint requires a valid Sanctum bearer token.
-
-The response uses the `CompanyResource`.
-
----
-
-# 📁 Project API
-
-The API provides full CRUD functionality for projects.
-
-### List Projects
-
-    GET /api/v1/projects
-
-### Create Project
-
-    POST /api/v1/projects
-
-Example request:
-
-    {
-        "name": "Example Project",
-        "description": "Example project description."
-    }
-
-### Get Project
-
-    GET /api/v1/projects/{project}
-
-### Update Project
-
-    PUT /api/v1/projects/{project}
-
-Example request:
-
-    {
-        "name": "Updated Project",
-        "description": "Updated description."
-    }
-
-### Delete Project
-
-    DELETE /api/v1/projects/{project}
-
-All project operations are restricted to the authenticated user's company.
-
----
-
-# ✅ Task API
-
-Tasks are accessed through their project for listing and creation.
-
-### List Project Tasks
-
-    GET /api/v1/projects/{project}/tasks
-
-### Create Task
-
-    POST /api/v1/projects/{project}/tasks
-
-Example request:
-
-    {
-        "title": "Example Task",
-        "description": "Example task description.",
-        "board_column_id": 1,
-        "assignee_id": 1,
-        "due_date": null
-    }
-
-Individual tasks can then be accessed directly.
-
-### Get Task
-
-    GET /api/v1/tasks/{task}
-
-### Update / Move Task
-
-    PUT /api/v1/tasks/{task}
-
-Example request:
-
-    {
-        "title": "Example Task",
-        "description": "Example task description.",
-        "board_column_id": 3,
-        "assignee_id": 1,
-        "due_date": null
-    }
-
-Changing `board_column_id` moves the task between Kanban columns.
-
-### Delete Task
-
-    DELETE /api/v1/tasks/{task}
-
----
-
-# 📦 API Resources
-
-Laravel API Resources are used to provide structured JSON responses.
-
-The following resources are implemented:
-
-    CompanyResource
-    ProjectResource
-    TaskResource
-
-### Company Resource
-
-    {
-        "data": {
-            "id": 1,
-            "name": "Example Company",
-            "is_active": true
-        }
-    }
-
-### Project Resource
-
-    {
-        "data": {
-            "id": 1,
-            "name": "Example Project",
-            "description": "Example description.",
-            "company_id": 1,
-            "created_at": "...",
-            "updated_at": "..."
-        }
-    }
-
-### Task Resource
-
-    {
-        "data": {
-            "id": 1,
-            "title": "Example Task",
-            "description": "Example description.",
-            "project_id": 1,
-            "board_column_id": 1,
-            "assignee_id": 1,
-            "due_date": null,
-            "position": 0,
-            "created_at": "...",
-            "updated_at": "..."
-        }
-    }
-
----
-
-# ❌ API Error Responses
-
-API requests return JSON responses for authentication and validation failures.
-
-Unauthenticated requests return:
-
-    {
-        "message": "Unauthenticated."
-    }
-
-with:
-
-    401 Unauthorized
-
-Unauthorized access returns a JSON error response with:
-
-    403 Forbidden
-
-Laravel validation errors use Laravel's standard JSON validation response format.
-
-The API is configured to render JSON responses for requests under:
-
-    /api/*
-
-and requests that explicitly expect JSON.
-
----
-
-# 🔒 API Tenant Isolation
-
-API tenant isolation is enforced at multiple levels.
-
-API tokens are bound to a single company.
-
-For example:
-
-    Company A
-        ↓
-    User A
-        ↓
-    Company A API Token
-
-The Company A token cannot access Company B's projects or tasks.
-
-Even if a user knows the ID of another company's resource, the API prevents access.
+| Column | Type | Description |
+|---|---|---|
+| `id` | bigint | Primary key |
+| `name` | string | User name |
+| `email` | string | Unique email |
+| `password` | string | Hashed password |
+| `company_id` | bigint | User's company |
+| `role` | string | `owner`, `admin`, or `member` |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Update timestamp |
 
 ### Projects
 
-Projects contain a direct:
+Projects belong to a company.
 
-    company_id
+| Column | Type | Description |
+|---|---|---|
+| `id` | bigint | Primary key |
+| `company_id` | bigint | Owning company |
+| `name` | string | Project name |
+| `description` | text | Optional description |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Update timestamp |
 
-and are protected using company-scoped queries and project authorization policies.
+### Board Columns
+
+Board columns belong to a project.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | bigint | Primary key |
+| `project_id` | bigint | Parent project |
+| `name` | string | Column name |
+| `position` | unsigned integer | Column order |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Update timestamp |
+
+New projects automatically receive:
+
+```text
+To Do → In Progress → Done
+```
 
 ### Tasks
 
-Tasks belong to projects rather than directly storing a `company_id`.
+Tasks belong to projects and board columns.
 
-Therefore, task authorization verifies the company through the task's project relationship.
+| Column | Type | Description |
+|---|---|---|
+| `id` | bigint | Primary key |
+| `project_id` | bigint | Parent project |
+| `board_column_id` | bigint | Current board column |
+| `assignee_id` | bigint | Assigned user, nullable |
+| `title` | string | Task title |
+| `description` | text | Optional description |
+| `due_date` | date | Optional due date |
+| `position` | unsigned integer | Position within column |
+| `created_at` | timestamp | Creation timestamp |
+| `updated_at` | timestamp | Update timestamp |
 
-This prevents a user from accessing a task belonging to another company's project.
+### Comments
 
----
+Comments use a polymorphic relationship and are currently associated with tasks.
 
-# 🚦 API Rate Limiting
+### Activities
 
-Authenticated API routes use the Laravel `api` rate limiter.
+Activities record important task events such as:
 
-The current limit is:
+```text
+TaskCreated
+TaskMoved
+TaskAssigned
+CommentAdded
+```
 
-    60 requests per minute
+### Notifications
 
-The rate limit is applied using:
+Laravel's database notification system is used for:
 
-    throttle:api
+```text
+task_assigned
+task_commented
+task_due_soon
+```
+
+Notifications contain a persistent `read_at` value.
+
+### Due-Date Reminders
+
+The `due_date_reminders` table provides persistent tracking for reminder processing.
+
+The reminder record uses:
+
+```text
+task_id + assignee_id + due_date
+```
+
+as a unique combination to prevent duplicate reminders.
+
+### Queue Tables
+
+Laravel's database queue uses:
+
+```text
+jobs
+failed_jobs
+```
+
+to manage pending and failed background jobs.
+
+## 🔗 Database Relationships
+
+```text
+Company
+│
+├── hasMany Users
+├── hasMany Projects
+└── hasMany Invitations
+
+User
+│
+├── belongsTo Company
+├── hasMany Assigned Tasks
+└── hasMany Comments
+
+Project
+│
+├── belongsTo Company
+├── hasMany Board Columns
+└── hasMany Tasks
+
+BoardColumn
+│
+├── belongsTo Project
+└── hasMany Tasks
+
+Task
+│
+├── belongsTo Project
+├── belongsTo BoardColumn
+├── belongsTo User (assignee)
+├── morphMany Comments
+├── hasMany Activities
+└── hasMany Due Date Reminders
+
+Comment
+│
+├── belongsTo User
+└── morphTo Commentable
+
+DueDateReminder
+│
+├── belongsTo Task
+└── belongsTo User
+```
+
+## 🏢 Multi-Tenancy
+
+The application uses company-based multi-tenancy.
+
+Every authenticated user belongs to a company:
+
+```text
+users.company_id
+```
+
+Projects belong to companies:
+
+```text
+projects.company_id
+```
+
+Tasks belong to projects, and board columns belong to projects.
+
+Tenant isolation is enforced through:
+
+- `CompanyScoped`
+- Laravel Policies
+- Form Request authorization
+- Company ownership checks
+- Project relationships
+- Same-company assignee validation
+- API authorization
+
+A user from Company A cannot access or modify Company B's projects or tasks.
+
+## 👥 Roles & Authorization
+
+The application supports three roles.
+
+### Owner
+
+Owners can:
+
+- Manage company settings
+- Invite teammates
+- Remove users
+- Manage projects
+- Manage board columns
+- Manage tasks
+- Delete the company
+
+### Admin
+
+Admins can:
+
+- Create projects
+- Update projects
+- Delete projects
+- Manage board columns
+- Create tasks
+- Update tasks
+- Delete tasks
+- Invite teammates
+
+### Member
+
+Members can access permitted company and project data but cannot perform owner/admin-only management operations.
+
+Authorization is enforced on the backend using Laravel Policies and Gates rather than relying only on UI visibility.
+
+## ✉️ Invitations
+
+Owners and admins can invite teammates.
+
+An invitation contains:
+
+- Email
+- Company
+- Role
+- Inviting user
+
+The invitation flow validates role assignments and prevents invalid owner-role invitations.
+
+Invitation creation also dispatches a queued placeholder job for future email delivery.
+
+## 📁 Projects
+
+Projects are company-scoped.
+
+Authorized users can:
+
+- Create projects
+- View projects
+- Edit projects
+- Delete projects
+
+Every project belongs to one company.
+
+## 📋 Kanban Boards
+
+Each project automatically receives three default columns:
+
+```text
+To Do
+In Progress
+Done
+```
+
+Authorized users can:
+
+- Add columns
+- Rename columns
+- Delete columns
+- Reorder columns
+
+Columns use a numeric `position` value to maintain their order.
+
+## ✅ Tasks
+
+Tasks support:
+
+- Title
+- Description
+- Assignee
+- Due date
+- Board column
+- Position
+
+Task creation calculates an appropriate position within the selected board column.
+
+Tasks can be moved between columns using drag-and-drop.
+
+## 👤 Task Assignment
+
+Tasks can only be assigned to users belonging to the same company as the project.
+
+When a task is assigned:
+
+```text
+TaskAssigned Event
+        ↓
+Activity Listener
+        ↓
+Activity Record
+
+TaskAssigned Event
+        ↓
+Notification Listener
+        ↓
+Database Notification
+```
+
+The user performing the assignment does not receive a notification for their own action.
+
+## 🔎 Task Search & Filtering
+
+The project board supports:
+
+- Search by title
+- Search by description
+- Assignee filtering
+- Due-date range filtering
+- Board-column filtering
+- Due-date sorting
+- Combined filters
+
+### Search
+
+The search query checks:
+
+```text
+title
+description
+```
+
+using the current contains-search implementation.
+
+### Assignee Filtering
+
+Tasks can be filtered using:
+
+```text
+assignee_id
+```
+
+The selected assignee is validated against the current company's users.
+
+### Due-Date Filtering
+
+Tasks can be filtered using:
+
+```text
+due_from
+due_to
+```
+
+The application validates that `due_to` is not earlier than `due_from`.
+
+### Column Filtering
+
+Tasks can be filtered by:
+
+```text
+column_id
+```
+
+The selected column is validated against the current project.
+
+### Due-Date Sorting
+
+Tasks can be sorted by:
+
+```text
+sort_due_date=asc
+sort_due_date=desc
+```
+
+### Combined Filtering
+
+Filters can be combined in a single request.
+
+For example:
+
+```text
+Search: report
+Assignee: User A
+Due From: 2026-09-01
+Due To: 2026-09-30
+Column: In Progress
+```
+
+All applicable filters are applied together at the database query level.
+
+## 💬 Comments
+
+Users can add comments to tasks.
+
+Comments contain:
+
+- User
+- Task
+- Body
+- Timestamps
+
+When a comment is added:
+
+```text
+CommentAdded Event
+        ↓
+Activity Record
+        ↓
+Comment Notification
+```
+
+The user who added the comment does not receive a notification for their own comment.
+
+## 📜 Activity Log
+
+Activity tracking uses Laravel Events and Listeners.
+
+Tracked actions include:
+
+```text
+TaskCreated
+TaskMoved
+TaskAssigned
+CommentAdded
+```
+
+The event-driven structure keeps activity tracking separate from the core controller operations.
+
+## 🔔 Notifications
+
+The application uses Laravel database notifications.
+
+### Task Assignment
+
+The task assignee receives a notification when assigned to a task.
+
+### Task Comments
+
+The task assignee receives a notification when another user comments on their task.
+
+### Due-Date Reminders
+
+The task assignee receives a reminder when the task approaches its due date.
+
+### Read State
+
+Unread notifications have:
+
+```text
+read_at = null
+```
+
+When marked as read:
+
+```text
+read_at = current timestamp
+```
+
+The read state is persisted in the database.
+
+## 🧵 Background Jobs & Queues
+
+The application uses Laravel's database-backed queue system.
+
+Configure:
+
+```env
+QUEUE_CONNECTION=database
+```
+
+Start the worker:
+
+```bash
+php artisan queue:work
+```
+
+### Due-Date Reminder Workflow
+
+```text
+Laravel Scheduler
+      ↓
+tasks:send-due-date-reminders
+      ↓
+Find due-soon tasks
+      ↓
+Dispatch SendDueDateReminder Job
+      ↓
+Database Queue
+      ↓
+Queue Worker
+      ↓
+SendDueDateReminder
+      ↓
+Database Notification
+```
+
+### Reminder Command
+
+Run manually:
+
+```bash
+php artisan tasks:send-due-date-reminders
+```
+
+The command identifies eligible due-soon tasks and dispatches reminder jobs.
+
+### Scheduled Execution
+
+The command is registered with Laravel Scheduler and runs daily.
+
+Check configured schedules:
+
+```bash
+php artisan schedule:list
+```
+
+### Retry Configuration
+
+Due-date reminder jobs use multiple attempts with progressive backoff.
+
+The retry configuration is designed to handle temporary failures without immediately marking the job as permanently failed.
+
+### Failed Jobs
+
+Failed jobs are stored in:
+
+```text
+failed_jobs
+```
+
+View failed jobs:
+
+```bash
+php artisan queue:failed
+```
+
+Retry a failed job:
+
+```bash
+php artisan queue:retry <id>
+```
+
+Forget a failed job:
+
+```bash
+php artisan queue:forget <id>
+```
+
+### Idempotency
+
+Reminder processing uses persistent reminder records and deterministic notification identifiers.
+
+The unique reminder combination:
+
+```text
+task_id + assignee_id + due_date
+```
+
+prevents duplicate reminder records for the same task and user.
+
+## 🖱️ Drag & Drop
+
+Tasks can be dragged between board columns.
+
+The frontend tracks:
+
+- Dragged task
+- Source column
+- Destination column
+- Destination position
+
+The movement is sent to the backend using an asynchronous request.
+
+The backend validates the task, project, board column, and tenant relationship before persisting the change.
+
+## 🔄 Task Movement
+
+Task movement updates:
+
+- `board_column_id`
+- `position`
+
+A successful movement dispatches the `TaskMoved` event.
+
+The event is then used to create the corresponding activity record.
+
+## 🛡️ Validation
+
+Laravel Form Requests are used to validate application operations.
+
+Validation covers:
+
+- Projects
+- Board columns
+- Tasks
+- Task movement
+- Comments
+- Assignees
+- Due dates
+- Positions
+- Tenant relationships
+
+Examples include:
+
+```text
+StoreProjectRequest
+UpdateProjectRequest
+StoreBoardColumnRequest
+UpdateBoardColumnRequest
+StoreTaskRequest
+UpdateTaskRequest
+MoveTaskRequest
+StoreCommentRequest
+TaskFilterRequest
+```
+
+## 🌐 Public JSON API
+
+The public API is versioned under:
+
+```text
+/api/v1
+```
+
+The API uses Laravel Sanctum for authentication.
+
+### API Authentication
+
+Create a token:
+
+```http
+POST /api/v1/auth/token
+```
+
+Example request:
+
+```json
+{
+    "email": "user@example.com",
+    "password": "password",
+    "device_name": "Postman"
+}
+```
+
+Authenticated requests use:
+
+```http
+Authorization: Bearer <token>
+Accept: application/json
+```
+
+### Company
+
+```http
+GET /api/v1/company
+```
+
+Returns the authenticated user's company.
+
+### Projects
+
+```http
+GET    /api/v1/projects
+POST   /api/v1/projects
+GET    /api/v1/projects/{project}
+PUT    /api/v1/projects/{project}
+DELETE /api/v1/projects/{project}
+```
+
+### Tasks
+
+```http
+GET    /api/v1/projects/{project}/tasks
+POST   /api/v1/projects/{project}/tasks
+GET    /api/v1/tasks/{task}
+PUT    /api/v1/tasks/{task}
+DELETE /api/v1/tasks/{task}
+```
+
+### API Resources
+
+Dedicated Laravel API Resources provide consistent JSON responses for:
+
+- Companies
+- Projects
+- Tasks
+
+### API Security
+
+API tokens are associated with users and their companies.
+
+API authorization verifies that requested projects and tasks belong to the authenticated user's company.
+
+Cross-company resources cannot be accessed through the API.
+
+### API Rate Limiting
+
+Authenticated API requests are limited to:
+
+```text
+60 requests per minute
+```
 
 Requests exceeding the limit receive:
 
-    429 Too Many Requests
-
-The limiter identifies authenticated requests using the authenticated user's ID and falls back to the request IP address when no authenticated user is available.
-
----
-
-# 🧪 Testing
-
-The application uses Pest for automated testing.
-
-Tests cover:
-
-- Authentication.
-- Registration.
-- Company creation.
-- Company ownership.
-- Roles and permissions.
-- Tenant isolation.
-- Project CRUD.
-- Board column functionality.
-- Task CRUD.
-- Task movement.
-- Task assignment.
-- Due dates.
-- Comments.
-- Activity logging.
-- Notifications.
-- Background jobs.
-- Queue processing.
-- API authentication.
-- API token/company binding.
-- API resources.
-- API validation.
-- API rate limiting.
-- Project API CRUD.
-- Task API CRUD.
-- Cross-company API isolation.
-- Complete API workflow.
+```text
+429 Too Many Requests
+```
 
----
+### API Workflow
 
-# 🌐 Task 7 API Tests
+The complete API workflow covers:
 
-Dedicated API tests are located under:
+```text
+Authenticate
+    ↓
+Create Project
+    ↓
+Create Task
+    ↓
+Update Task
+    ↓
+Move Task
+    ↓
+Delete Task
+```
 
-    tests/Feature/Api/
+A Postman collection is included for API testing.
 
-The API test suite includes coverage for:
+## ⚡ Performance & Scalability
 
-- Sanctum authentication.
-- Token authentication.
-- Company-bound tokens.
-- Company switching / token mismatch protection.
-- Rate limiting.
-- API Resources.
-- Company API.
-- Project API.
-- Task API.
-- Task movement.
-- Tenant isolation.
-- Complete API acceptance workflow.
+Task 8 focused on making the task board usable at larger data volumes.
 
-The complete acceptance workflow verifies:
+The performance pass covered:
 
-    Authenticate
-        ↓
-    Create Project
-        ↓
-    Automatic Board Columns
-        ↓
-    Create Task
-        ↓
-    Move Task
-        ↓
-    Delete Task
+- Search
+- Filtering
+- Large dataset generation
+- N+1 query detection
+- Eager loading
+- Database indexing
+- Query-count measurement
+- Board load-time measurement
 
-The tenant isolation workflow verifies that:
+## 🌱 Large Dataset Seeder
 
-    Company A Token
-           ↓
-    Company B Project → Denied
-    Company B Task    → Denied
-    Company B Tasks   → Denied
+`LargeDatasetSeeder` generates:
 
----
+```text
+5 companies
+50 users
+25 projects
+75 board columns
+25,000 tasks
+```
 
-# 📮 Postman API Collection
+Each company contains:
 
-A Postman collection is included for manually testing the public API.
+```text
+10 users
+5 projects
+```
 
-The collection is located under:
+Each project contains:
 
-    postman/TeamBoard API v1/
+```text
+3 board columns
+1,000 tasks
+```
 
-It contains requests for:
+Tasks are generated using factories and inserted in batches.
 
-    Authentication
-    Company
-    Projects
-    Tasks
+### Run the Seeder
 
-The intended API testing workflow is:
+```bash
+php artisan db:seed --class=LargeDatasetSeeder
+```
 
-    Get API Token
-          ↓
-    Create Project
-          ↓
-    Get/List Project
-          ↓
-    Create Task
-          ↓
-    Get Task
-          ↓
-    Move Task
-          ↓
-    Delete Task
+Expected totals:
 
-The Postman collection uses the local Laravel API:
+```text
+Companies: 5
+Users: 50
+Projects: 25
+Tasks: 25,000
+```
 
-    http://127.0.0.1:8000/api/v1
+## 🔍 N+1 Query Detection & Fix
 
-API requests require a valid Sanctum bearer token except for the token-generation endpoint.
+The board was measured using Laravel's database query log before and after eager-loading optimization.
 
----
+### Before Optimization
 
-# 🧰 Running the Application
+A board containing 20 tasks produced:
 
-Clone the repository:
+```text
+28 total database queries
+```
 
-    git clone <repository-url>
-    cd multi-tenant-app
+The query log showed:
 
-Install PHP dependencies:
+```sql
+select * from "users" where "users"."id" = ? limit 1
+```
 
-    composer install
+This query was executed once for each of the 20 tasks.
 
-Install frontend dependencies:
+The result was:
 
-    npm install
+```text
+1 task query
+20 individual assignee queries
+```
 
-Create the environment file by copying:
+This was an N+1 query problem caused by lazy-loading each task's assignee relationship.
 
-    .env.example
+### Fix
 
-to:
+The task assignee relationship was eager-loaded in `ProjectController::show()`.
 
-    .env
+The task query now uses:
 
-Generate the application key:
+```php
+->with([
+    'assignee',
+    'comments.user',
+]);
+```
 
-    php artisan key:generate
+Laravel therefore loads the required assignees in a single query using a `WHERE IN` condition instead of performing one query for every task.
 
-Configure the database in `.env`.
+### After Optimization
 
-For SQLite, create:
+The same board containing 20 tasks produced:
 
-    database/database.sqlite
+```text
+9 total database queries
+```
 
-Run migrations:
+The 20 individual assignee queries were replaced with one eager-loading query:
 
-    php artisan migrate
+```sql
+select * from "users" where "users"."id" in (...)
+```
 
-Start the Laravel development server:
+The measured result was:
 
-    php artisan serve
+```text
+Before: 28 queries
+After:   9 queries
 
-The application will normally be available at:
+Before: 20 individual assignee queries
+After:   1 eager-loading query
+```
 
-    http://127.0.0.1:8000
+This reduced the total query count by 19 queries, approximately 68%.
 
----
+A regression test was added to the existing:
 
-# 🧪 Running Tests
+```text
+tests/Feature/TaskTest.php
+```
 
-Run the complete test suite:
+to ensure the board does not return to the N+1 query pattern.
 
-    php artisan test
+## 🗂️ Database Indexes
 
-Run only API tests:
+Indexes were added based on the actual filtering and sorting requirements instead of indexing every database column.
 
-    php artisan test tests/Feature/Api
+### Existing Task Indexes
 
-Run the API acceptance workflow test:
+The `tasks` table already contains:
 
-    php artisan test tests/Feature/Api/ApiWorkflowTest.php
+```php
+$table->index(['project_id', 'board_column_id']);
+$table->index(['assignee_id']);
+```
 
-Clear Laravel caches when necessary:
+The composite index:
 
-    php artisan optimize:clear
+```text
+project_id + board_column_id
+```
 
----
+supports task queries involving projects and their board columns.
 
-# ⚙️ Queue Processing
+The `assignee_id` index supports filtering tasks by assigned user.
 
-For the database queue, run:
+These indexes were retained and duplicate indexes were not added.
 
-    php artisan queue:work
+### Due-Date Index
 
-The scheduler can be run locally using:
+Task 8 introduced due-date filtering and sorting, so an index was added to:
 
-    php artisan schedule:work
+```text
+tasks.due_date
+```
 
-These processes allow queued jobs and scheduled tasks to run during development.
+The migration adds:
 
----
+```php
+$table->index('due_date');
+```
 
-# 🔧 Useful Artisan Commands
+This supports queries involving:
 
-Clear cached application data:
+```text
+due_from
+due_to
+due_date sorting
+```
 
-    php artisan optimize:clear
+The index can be removed during rollback using:
 
-Run migrations:
+```php
+$table->dropIndex(['due_date']);
+```
 
-    php artisan migrate
+### Why Other Indexes Were Not Added
 
-Open Laravel Tinker:
+A separate `project_id` index was not added because `project_id` is already the leftmost column of:
 
-    php artisan tinker
+```text
+(project_id, board_column_id)
+```
 
-Run tests:
+A duplicate `assignee_id` index was not added because one already exists.
 
-    php artisan test
+A standard B-tree index was not added to `title` or `description` because the current search implementation uses:
 
----
+```sql
+LIKE '%search%'
+```
 
-# 📌 Task Progress
+A leading wildcard generally prevents a normal B-tree index from being useful for this type of contains-search.
 
-## Task 1 — Project Skeleton, Tenancy Model & Authentication
+If search requirements grow significantly in the future, a dedicated full-text search solution could be considered.
 
-Completed:
+## 📊 Performance Validation
 
-- Laravel project skeleton.
-- Company model.
-- Company ownership.
-- User/company relationship.
-- Registration flow.
-- Authentication.
-- Tenant-aware architecture.
-- Initial feature tests.
+A dedicated performance test was added to the existing:
 
----
+```text
+tests/Feature/TaskTest.php
+```
 
-## Task 2 — Roles, Permissions & Tenant Isolation
+The test measured the task board with a large number of tasks.
 
-Completed:
+The measured result was:
 
-- Owner/admin/member roles.
-- Role-based authorization.
-- Company policies.
-- Tenant isolation.
-- Invitations.
-- Member management.
-- Cross-company access tests.
-- Authorization tests.
+```text
+Board load time: 251.41 ms
+Board query count: 9
+```
 
----
+The performance test passed with:
 
-## Task 3 — Projects & Boards CRUD
+```text
+2 assertions
+```
 
-Completed:
+The board therefore completed the measured performance test with:
 
-- Project CRUD.
-- Project policies.
-- Project validation.
-- Project/company relationship.
-- Automatic default board columns.
-- Board column management.
-- Board column ordering.
-- Validation tests.
+```text
+9 database queries
+251.41 ms measured load time
+```
 
----
+The large dataset seeder independently provides a realistic dataset containing 25,000 tasks for large-scale testing.
 
-## Task 4 — Tasks & Kanban Workflow
+## 🧪 Testing
 
-Completed:
+The application contains feature tests covering:
 
-- Task model.
-- Task CRUD.
-- Task assignment.
-- Due dates.
-- Task positioning.
-- Kanban task movement.
-- Task filtering.
-- Task sorting.
-- Authorization.
-- Tenant isolation.
+- Authentication
+- Registration
+- Login
+- Logout
+- Authorization
+- Roles
+- Tenant isolation
+- Invitations
+- Projects
+- Board columns
+- Tasks
+- Task assignment
+- Task movement
+- Task positioning
+- Search
+- Assignee filtering
+- Due-date filtering
+- Column filtering
+- Combined filtering
+- Comments
+- Activity tracking
+- Notifications
+- Background jobs
+- Queue processing
+- Due-date reminders
+- API authentication
+- API resources
+- API tenant isolation
+- API project CRUD
+- API task operations
+- Large dataset seeding
+- N+1 query prevention
+- Database indexes
+- Board performance
 
----
+Task 8 task-related tests were added to the existing:
 
-## Task 5 — Comments, Activity & Notifications
+```text
+tests/Feature/TaskTest.php
+```
 
-Completed:
+### Run the Complete Test Suite
 
-- Task comments.
-- Activity logging.
-- Task assignment notifications.
-- Comment notifications.
-- Database notifications.
-- Notification dropdown.
-- Mark-as-read functionality.
-- Notification tests.
+```bash
+php artisan test
+```
 
----
+### Run Task Tests
 
-## Task 6 — Background Jobs & Queues
+```bash
+php artisan test tests/Feature/TaskTest.php
+```
 
-Completed:
+### Run the Performance Test
 
-- Database queue configuration.
-- Due-date reminder jobs.
-- Scheduled reminder command.
-- Laravel scheduler integration.
-- Idempotency protection.
-- Retry handling.
-- Failed job handling.
-- Queue-related tests.
+```bash
+php artisan test tests/Feature/TaskTest.php --filter="task board remains efficient with a large number of tasks"
+```
 
----
-
-## Task 7 — Public JSON API + Token Auth
-
-Completed:
-
-- Laravel Sanctum installation.
-- Sanctum bearer token authentication.
-- Company-bound API tokens.
-- API token company validation middleware.
-- Versioned `/api/v1` routes.
-- API Resources.
-- JSON API response handling.
-- API validation responses.
-- Company API.
-- Full Project CRUD API.
-- Project task listing and creation.
-- Task retrieval.
-- Task update and movement.
-- Task deletion.
-- API tenant isolation.
-- API rate limiting.
-- API acceptance workflow tests.
-- Cross-company security tests.
-- Postman collection.
-- API documentation.
-
----
-
-# 📡 API Endpoint Summary
-
-## Authentication
-
-    POST /api/v1/auth/token
-
-## Company
-
-    GET /api/v1/company
-
-## Projects
-
-    GET    /api/v1/projects
-    POST   /api/v1/projects
-    GET    /api/v1/projects/{project}
-    PUT    /api/v1/projects/{project}
-    DELETE /api/v1/projects/{project}
-
-## Tasks
-
-    GET    /api/v1/projects/{project}/tasks
-    POST   /api/v1/projects/{project}/tasks
-    GET    /api/v1/tasks/{task}
-    PUT    /api/v1/tasks/{task}
-    DELETE /api/v1/tasks/{task}
-
----
-
-# 🔐 Security Summary
-
-The application applies authorization at the server level.
-
-Security mechanisms include:
-
-- Laravel authentication.
-- Laravel Policies.
-- Company-scoped data access.
-- Sanctum bearer token authentication.
-- Company-bound API tokens.
-- Token/company validation middleware.
-- Tenant-aware project access.
-- Relationship-based task authorization.
-- API rate limiting.
-- JSON authentication errors.
-- Validation through Form Requests.
-- Protected API routes.
-
-API requests cannot bypass tenant isolation simply by guessing another company's resource IDs.
-
----
-
-# 📂 Project Structure
-
-Important application directories include:
-
-    app/
-    ├── Http/
-    │   ├── Controllers/
-    │   │   └── Api/
-    │   │       └── V1/
-    │   ├── Requests/
-    │   ├── Resources/
-    │   └── Middleware/
-    ├── Models/
-    ├── Policies/
-    └── Jobs/
-
-    database/
-    ├── factories/
-    ├── migrations/
-    └── seeders/
-
-    resources/
-    └── views/
-
-    routes/
-    ├── web.php
-    └── api.php
-
-    tests/
-    └── Feature/
-        └── Api/
-
-    postman/
-    └── TeamBoard API v1/
-
----
-
-# 📜 Development Workflow
-
-Feature development follows a branch-based workflow.
-
-Each task is implemented on a dedicated feature branch.
-
-Example:
-
-    git checkout main
-    git pull origin main
-    git checkout -b feature/task7
-
-Changes are committed using descriptive commit messages.
-
-Example:
-
-    git commit -m "feat: add sanctum api authentication"
-
-After completing a task:
-
-    git push -u origin feature/task7
-
-A Pull Request is then created from:
-
-    feature/task7
-
-into:
-
-    main
-
-The branch is reviewed before being merged.
-
----
-
-# 📋 Task 7 Commit Stages
-
-Task 7 was organized into the following stages:
-
-    feat: add sanctum api authentication
-
-    feat: add versioned api resources and response format
-
-    feat: add company and project api endpoints
-
-    feat: add task api endpoints
-
-    feat: harden api authentication and rate limiting
-
-    test: cover complete api workflow and tenant isolation
-
----
-
-# 🎯 API Acceptance Criteria
-
-Task 7 is considered complete when the following workflow succeeds entirely through the API:
-
-    1. Authenticate
-    2. Create a project
-    3. Create a task
-    4. Move the task to another board column
-    5. Delete the task
-
-The API must also ensure:
-
-    Company A token
-            ↓
-    Company A resources → Allowed
-
-    Company A token
-            ↓
-    Company B resources → Denied
-
-The API provides:
-
-- Versioned endpoints.
-- Sanctum authentication.
-- Company-bound tokens.
-- Tenant isolation.
-- Consistent JSON responses.
-- Validation errors.
-- Rate limiting.
-- Automated tests.
-- Manual Postman testing support.
+Expected performance output:
+
+```text
+Board load time: 251.41 ms
+Board query count: 9
+```
+
+### Run the Large Dataset Seeder Test
+
+```bash
+php artisan test tests/Feature/LargeDatasetSeederTest.php
+```
+
+### Run Due-Date Reminder Tests
+
+```bash
+php artisan test tests/Feature/SendDueDateReminderJobTest.php
+php artisan test tests/Feature/SendDueDateRemindersCommandTest.php
+```
+
+### Run Comment Tests
+
+```bash
+php artisan test --filter="CommentTest"
+```
+
+### Run Notification Tests
+
+```bash
+php artisan test --filter="NotificationTest"
+```
+
+## 📂 Project Structure
+
+```text
+app/
+├── Console/
+│   └── Commands/
+│       └── SendDueDateReminders.php
+│
+├── Events/
+│   ├── CommentAdded.php
+│   ├── TaskAssigned.php
+│   ├── TaskCreated.php
+│   └── TaskMoved.php
+│
+├── Http/
+│   ├── Controllers/
+│   │   ├── BoardColumnController.php
+│   │   ├── CommentController.php
+│   │   ├── CompanyController.php
+│   │   ├── InvitationController.php
+│   │   ├── NotificationController.php
+│   │   ├── ProjectController.php
+│   │   └── TaskController.php
+│   │
+│   └── Requests/
+│       ├── StoreBoardColumnRequest.php
+│       ├── UpdateBoardColumnRequest.php
+│       ├── StoreCommentRequest.php
+│       ├── StoreProjectRequest.php
+│       ├── UpdateProjectRequest.php
+│       ├── StoreTaskRequest.php
+│       ├── UpdateTaskRequest.php
+│       ├── MoveTaskRequest.php
+│       └── TaskFilterRequest.php
+│
+├── Jobs/
+│   ├── SendDueDateReminder.php
+│   └── ...
+│
+├── Listeners/
+│   ├── LogTaskActivity.php
+│   ├── SendTaskAssignedNotification.php
+│   └── SendTaskCommentedNotification.php
+│
+├── Models/
+│   ├── Activity.php
+│   ├── BoardColumn.php
+│   ├── Comment.php
+│   ├── Company.php
+│   ├── DueDateReminder.php
+│   ├── Invitation.php
+│   ├── Project.php
+│   ├── Task.php
+│   └── User.php
+│
+├── Notifications/
+│   ├── DueDateReminderNotification.php
+│   ├── TaskAssignedNotification.php
+│   └── TaskCommentedNotification.php
+│
+├── Policies/
+│   ├── CompanyPolicy.php
+│   └── ProjectPolicy.php
+│
+└── Traits/
+    └── CompanyScoped.php
+
+database/
+├── factories/
+│   ├── BoardColumnFactory.php
+│   ├── CompanyFactory.php
+│   ├── ProjectFactory.php
+│   └── TaskFactory.php
+│
+├── migrations/
+│   ├── ..._create_companies_table.php
+│   ├── ..._create_projects_table.php
+│   ├── ..._create_board_columns_table.php
+│   ├── ..._create_tasks_table.php
+│   ├── ..._create_comments_table.php
+│   ├── ..._create_activities_table.php
+│   ├── ..._create_due_date_reminders_table.php
+│   ├── ..._create_notifications_table.php
+│   ├── ..._create_jobs_table.php
+│   ├── ..._create_failed_jobs_table.php
+│   └── ..._add_due_date_index_to_tasks_table.php
+│
+└── seeders/
+    ├── DatabaseSeeder.php
+    └── LargeDatasetSeeder.php
+
+resources/
+└── views/
+    ├── notifications/
+    ├── projects/
+    └── ...
+
+routes/
+├── api.php
+├── console.php
+└── web.php
+
+tests/
+└── Feature/
+    ├── AuthenticationTest.php
+    ├── BoardColumnTest.php
+    ├── CommentTest.php
+    ├── NotificationTest.php
+    ├── ProjectTest.php
+    ├── TaskMoveTest.php
+    ├── TaskTest.php
+    ├── LargeDatasetSeederTest.php
+    ├── SendDueDateReminderJobTest.php
+    └── SendDueDateRemindersCommandTest.php
+```
+
+## 🛣️ Main Web Routes
+
+### Projects
+
+```http
+GET     /projects
+GET     /projects/create
+POST    /projects
+GET     /projects/{project}
+GET     /projects/{project}/edit
+PUT     /projects/{project}
+DELETE  /projects/{project}
+```
+
+### Board Columns
+
+```http
+POST    /projects/{project}/columns
+PUT     /projects/{project}/columns/{boardColumn}
+DELETE  /projects/{project}/columns/{boardColumn}
+```
+
+### Tasks
+
+```http
+POST    /projects/{project}/tasks
+PUT     /projects/{project}/tasks/{task}
+DELETE  /projects/{project}/tasks/{task}
+PATCH   /projects/{project}/tasks/{task}/move
+```
+
+### Comments
+
+```http
+POST    /tasks/{task}/comments
+DELETE  /comments/{comment}
+```
+
+### Notifications
+
+```http
+GET     /notifications
+POST    /notifications/{notification}/read
+```
+
+## ⚙️ Useful Artisan Commands
+
+```bash
+php artisan serve
+php artisan migrate
+php artisan migrate:fresh
+php artisan migrate:fresh --seed
+php artisan db:seed --class=LargeDatasetSeeder
+php artisan route:list
+php artisan test
+php artisan optimize:clear
+```
+
+### Queue Commands
+
+```bash
+php artisan queue:work
+php artisan queue:work --once
+php artisan queue:failed
+php artisan queue:retry <id>
+php artisan queue:forget <id>
+```
+
+### Reminder Commands
+
+```bash
+php artisan tasks:send-due-date-reminders
+php artisan schedule:list
+```
+
+## 🧹 Clearing Laravel Caches
+
+If changes to routes, configuration, views, or application code are not appearing correctly:
+
+```bash
+php artisan optimize:clear
+```
+
+## 🗃️ Database Reset
+
+Reset the database:
+
+```bash
+php artisan migrate:fresh
+```
+
+Reset and seed:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Reset and generate the large performance dataset:
+
+```bash
+php artisan migrate:fresh
+php artisan db:seed --class=LargeDatasetSeeder
+```
+
+## 🔀 Git Workflow
+
+Development is organized into feature branches.
+
+Create a feature branch:
+
+```bash
+git checkout -b feature/task8
+```
+
+Commit changes:
+
+```bash
+git add .
+git commit -m "your commit message"
+```
+
+Push the branch:
+
+```bash
+git push -u origin feature/task8
+```
+
+Then create a Pull Request targeting `main`.
+
+## 📌 Development Tasks
+
+### Task 1 — Project Skeleton, Multi-Tenancy & Authentication
+
+Implemented:
+
+- Company model and migration
+- User-company relationship
+- Company creation during registration
+- Company ownership
+- Fortify authentication
+- Login/logout
+- Company switching scaffold
+
+### Task 2 — Roles, Permissions & Tenant Isolation
+
+Implemented:
+
+- Owner/admin/member roles
+- Role-based authorization
+- Laravel Policies
+- Tenant isolation
+- Company-scoped data
+- Team invitations
+- Invitation authorization
+- Queued invitation job
+- Company user management
+
+### Task 3 — Projects & Boards CRUD
+
+Implemented:
+
+- Project CRUD
+- Project validation
+- Company-scoped projects
+- Board column CRUD
+- Default board columns
+- Column renaming
+- Column deletion
+- Column reordering
+- Board column validation
+- Tenant isolation
+
+### Task 4 — Task Management & Kanban Functionality
+
+Implemented:
+
+- Task CRUD
+- Task validation
+- Task assignment
+- Same-company assignee validation
+- Task due dates
+- Task positioning
+- Drag-and-drop movement
+- AJAX task movement
+- Persisted task positions
+- Task filters
+- Task movement authorization
+- Cross-company protection
+
+### Task 5 — Comments, Activity Log & Notifications
+
+Implemented:
+
+- Task comments
+- Comment validation
+- Comment ownership
+- Activity tracking
+- Task events
+- Activity listeners
+- Database notifications
+- Assignment notifications
+- Comment notifications
+- Notification read state
+- Notification UI
+
+### Task 6 — Background Jobs & Due-Date Reminders
+
+Implemented:
+
+- Database queue
+- Failed jobs
+- Due-date reminder job
+- Due-date reminder notification
+- Reminder command
+- Daily scheduler
+- Retry configuration
+- Backoff configuration
+- Failed job handling
+- Idempotent reminder processing
+- Reminder tracking
+- Queue tests
+
+### Task 7 — Public JSON API & Token Authentication
+
+Implemented:
+
+- Laravel Sanctum
+- API token authentication
+- Company-bound API tokens
+- API rate limiting
+- Versioned `/api/v1` routes
+- Company endpoint
+- Project CRUD API
+- Task API
+- API Resources
+- JSON responses
+- API validation
+- API tenant isolation
+- API workflow tests
+- Postman collection
+- API documentation
+
+### Task 8 — Search, Filtering & Performance Pass
+
+Implemented:
+
+- Task search
+- Assignee filtering
+- Due-date range filtering
+- Board-column filtering
+- Due-date sorting
+- Combined filters
+- Large dataset seeding
+- 25,000-task dataset
+- N+1 query detection
+- Eager loading
+- N+1 regression testing
+- Due-date database indexing
+- Query-count validation
+- Board performance testing
+- Performance documentation
+
+## 📈 Task 8 Results
+
+### Search & Filtering
+
+The board supports combined:
+
+```text
+Search
++
+Assignee
++
+Due Date Range
++
+Board Column
++
+Due Date Sorting
+```
+
+### Large Dataset
+
+```text
+5 companies
+50 users
+25 projects
+75 board columns
+25,000 tasks
+```
+
+### N+1 Optimization
+
+```text
+Before: 28 queries
+After:   9 queries
+
+Before: 20 individual assignee queries
+After:   1 eager-loading query
+```
+
+Query reduction:
+
+```text
+19 fewer queries
+≈68% reduction
+```
+
+### Board Performance
+
+```text
+1,000 tasks
+9 database queries
+251.41 ms measured board load time
+```
+
+## 🔒 Security Considerations
+
+The application uses multiple layers of authorization and tenant protection:
+
+- Authentication middleware
+- Form Request authorization
+- Laravel Policies
+- Company-scoped queries
+- Project ownership validation
+- Board column ownership validation
+- Task-project validation
+- Same-company assignee validation
+- Role-based authorization
+- Sanctum bearer tokens
+- Company-bound API access
+- API rate limiting
+
+Sensitive configuration values should never be committed to Git.
+
+The `.env` file remains excluded through `.gitignore`.
+
+## 🚫 Files Not Committed to Git
+
+The following files/directories should remain ignored:
+
+```text
+.env
+/node_modules
+/vendor
+/public/build
+/storage/*.key
+```
+
+## 🔄 Application Workflow
+
+```text
+Create Company
+      ↓
+Register / Login
+      ↓
+Assign Role
+      ↓
+Invite Teammates
+      ↓
+Create Project
+      ↓
+Create Default Board Columns
+      ↓
+Create Tasks
+      ↓
+Search / Filter / Assign / Add Due Dates
+      ↓
+Drag & Drop Tasks
+      ↓
+Persist Movement
+      ↓
+Log Activity
+      ↓
+Add Comments
+      ↓
+Send Notifications
+      ↓
+Mark Notifications as Read
+      ↓
+Daily Reminder Scheduler
+      ↓
+Dispatch Reminder Jobs
+      ↓
+Queue Worker
+      ↓
+Due-Date Reminder Notification
+```
+
+## 🔄 Event-Driven Architecture
+
+```text
+TaskCreated
+TaskMoved
+TaskAssigned
+CommentAdded
+      ↓
+Event Listeners
+      ↓
+Activities / Notifications
+```
+
+This keeps secondary behavior such as activity logging and notifications separate from the main task operations.
+
+## 🧵 Background Processing Architecture
+
+```text
+Laravel Scheduler
+      ↓
+Artisan Command
+      ↓
+Queue Dispatch
+      ↓
+Database Queue
+      ↓
+Queue Worker
+      ↓
+Background Job
+      ↓
+Notification
+```
+
+## 🎯 Future Improvements
+
+Potential future improvements include:
+
+- Real invitation email delivery
+- Invitation acceptance flow
+- More advanced company switching
+- Task editing directly from Kanban cards
+- Task deletion directly from Kanban cards
+- More advanced drag-and-drop positioning
+- Pagination or lazy loading for extremely large boards
+- Full-text task search for larger datasets
+- Additional API resources and endpoints
+- API token abilities/scopes
+- Production caching
+- Redis queues for production
+- Additional performance monitoring
+- Production database optimization
 
 ---
 
