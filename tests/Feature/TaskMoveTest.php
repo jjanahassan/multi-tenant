@@ -147,3 +147,50 @@ test('user can reorder a task within the same column', function () {
         'position' => 0,
     ]);
 });
+
+test('moving a task creates a moved activity', function () {
+    $company = Company::factory()->create();
+
+    $user = User::factory()->create([
+        'company_id' => $company->id,
+        'role' => 'admin',
+    ]);
+
+    $project = Project::factory()->create([
+        'company_id' => $company->id,
+    ]);
+
+    $columns = $project->boardColumns()->orderBy('position')->get();
+
+    $todo = $columns->first();
+    $progress = $columns->get(1);
+
+    $task = Task::factory()->create([
+        'project_id' => $project->id,
+        'board_column_id' => $todo->id,
+        'position' => 0,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->patchJson(
+            route('projects.tasks.move', [$project, $task]),
+            [
+                'board_column_id' => $progress->id,
+                'position' => 0,
+            ]
+        );
+
+    $response
+        ->assertSuccessful()
+        ->assertJson([
+            'message' => 'Task moved successfully.',
+        ]);
+
+    $this->assertDatabaseHas('activities', [
+        'user_id' => $user->id,
+        'task_id' => $task->id,
+        'action' => 'moved',
+        'description' => 'Task was moved to another column.',
+    ]);
+});
