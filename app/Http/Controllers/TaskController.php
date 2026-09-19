@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Events\TaskCreated;
 use App\Events\TaskAssigned;
 use App\Events\TaskMoved;
+use App\Services\PositionCalculator;
 
 class TaskController extends Controller
 {
@@ -21,13 +22,13 @@ class TaskController extends Controller
     {
         $validated = $request->validated();
 
-        $nextPosition = (
-            $project
-                ->tasks()
-                ->where('board_column_id', $validated['board_column_id'])
-                ->max('position')
-                ?? -1
-        ) + 1;
+        $maxPosition = $project
+            ->tasks()
+            ->where('board_column_id', $validated['board_column_id'])
+            ->max('position');
+
+        $nextPosition = (new PositionCalculator())
+            ->nextPosition($maxPosition);
 
         $task = $project->tasks()->create([
             'board_column_id' => $validated['board_column_id'],

@@ -8,6 +8,7 @@ use App\Models\BoardColumn;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
+use App\Services\PositionCalculator;
 
 class BoardColumnController extends Controller
 {
@@ -17,7 +18,10 @@ class BoardColumnController extends Controller
         StoreBoardColumnRequest $request,
         Project $project
     ) {
-        $nextPosition = ($project->boardColumns()->max('position') ?? -1) + 1;
+        $maxPosition = $project->boardColumns()->max('position');
+
+        $nextPosition = (new PositionCalculator())
+            ->nextPosition($maxPosition);
 
         $project->boardColumns()->create([
             'name' => $request->validated('name'),
