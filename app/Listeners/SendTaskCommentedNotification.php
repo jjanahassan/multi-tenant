@@ -6,6 +6,7 @@ use App\Events\CommentAdded;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Notifications\TaskCommentedNotification;
+use App\Models\Task;
 
 
 class SendTaskCommentedNotification
@@ -25,7 +26,7 @@ class SendTaskCommentedNotification
     {
         $task = $event->comment->commentable;
 
-        if (!$task) {
+        if (!$task instanceof Task) {
             return;
         }
 

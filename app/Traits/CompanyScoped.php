@@ -19,9 +19,12 @@ trait CompanyScoped
             }
         });
 
-        static::creating(function (Model $model) {
+        static::creating(function (Model $model): void {
             if (Auth::check()) {
-                $model->company_id = Auth::user()->company_id;
+                $model->setAttribute(
+                    'company_id',
+                    Auth::user()->company_id
+                );
             }
         });
     }

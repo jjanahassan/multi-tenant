@@ -8,10 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
-    public function token(Request $request)
+    public function token(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email'],

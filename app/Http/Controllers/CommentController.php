@@ -7,12 +7,13 @@ use App\Models\Task;
 use App\Models\Comment;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Events\CommentAdded;
+use Illuminate\Http\RedirectResponse;
 
 class CommentController extends Controller
 {
     use AuthorizesRequests;
 
-    public function store(StoreCommentRequest $request, Task $task){
+    public function store(StoreCommentRequest $request, Task $task): RedirectResponse {
         $comment = $task->comments()->create([
             'user_id' => $request->user()->id,
             'body' => $request->validated('body'),
@@ -23,7 +24,7 @@ class CommentController extends Controller
         return back()-> with('success', 'Comment added successfully.');
     }
 
-    public function destroy(Comment $comment){
+    public function destroy(Comment $comment): RedirectResponse {
         abort_unless($comment->user_id === auth()->id(), 403);
 
         $comment->delete();

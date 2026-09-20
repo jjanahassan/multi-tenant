@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Task;
 
 class StoreCommentRequest extends FormRequest
 {
@@ -14,8 +15,11 @@ class StoreCommentRequest extends FormRequest
     {
         $task = $this->route('task');
 
-        return $task
-            && $this->user()
+        if (! $task instanceof Task) {
+            return false;
+        }
+
+        return $this->user()
             && $task->project
             && $task->project->company_id === $this->user()->company_id;
     }

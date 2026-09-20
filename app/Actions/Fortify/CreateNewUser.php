@@ -41,7 +41,7 @@ class CreateNewUser implements CreatesNewUsers
                 'role'=> 'owner',
             ]);
 
-            $company->owner_id= $user->id;
+            $company->owner_id = (int) $user->id;
             $company-> save();
 
             return $user;

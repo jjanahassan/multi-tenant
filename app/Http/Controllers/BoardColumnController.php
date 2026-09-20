@@ -9,6 +9,7 @@ use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use App\Services\PositionCalculator;
+use Illuminate\Http\RedirectResponse;
 
 class BoardColumnController extends Controller
 {
@@ -17,7 +18,7 @@ class BoardColumnController extends Controller
     public function store(
         StoreBoardColumnRequest $request,
         Project $project
-    ) {
+    ): RedirectResponse {
         $maxPosition = $project->boardColumns()->max('position');
 
         $nextPosition = (new PositionCalculator())
@@ -38,7 +39,7 @@ class BoardColumnController extends Controller
         UpdateBoardColumnRequest $request,
         Project $project,
         BoardColumn $boardColumn
-    ) {
+    ): RedirectResponse {
         $boardColumn->update($request->validated());
 
         return back()->with(
@@ -50,7 +51,7 @@ class BoardColumnController extends Controller
     public function destroy(
         Project $project,
         BoardColumn $boardColumn
-    ) {
+    ): RedirectResponse {
         $this->authorize('update', $project);
 
         $boardColumn->delete();
@@ -65,7 +66,7 @@ class BoardColumnController extends Controller
         Project $project,
         BoardColumn $boardColumn,
         string $direction
-    ) {
+    ): RedirectResponse {
         abort_unless($boardColumn->project_id === $project->id, 404);
 
         $this->authorize('update', $project);

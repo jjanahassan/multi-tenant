@@ -25,6 +25,9 @@ class SendDueDateReminder implements ShouldQueue
     )
     {}
 
+    /**
+     * @return array<int, int>
+     */
     public function backoff(): array{
         return [60, 300, 900];
     }

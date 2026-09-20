@@ -16,7 +16,7 @@ Route::prefix('v1')
 
 Route::prefix('v1')
     ->as('api.v1.')
-    ->middleware('auth:sanctum', 'company.token', 'throttle:api', )
+    ->middleware(['auth:sanctum', 'company.token', 'throttle:api', ])
     ->group(function () {
         Route::get('/test', function () {
             return response()->json([

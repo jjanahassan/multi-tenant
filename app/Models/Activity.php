@@ -9,10 +9,16 @@ class Activity extends Model
 {
     protected $fillable =['user_id', 'task_id', 'action', 'description', ];
 
+    /**
+     * @return BelongsTo<Task, $this>
+     */
     public function task(): BelongsTo{
         return $this->belongsTo(Task::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo{
         return $this->belongsTo(User::class);
     }

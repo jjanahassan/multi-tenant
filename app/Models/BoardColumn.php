@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Database\Factories\BoardColumnFactory;
 
 class BoardColumn extends Model
 {
+    /** @use HasFactory<BoardColumnFactory> */
     use HasFactory;
 
     protected $fillable= ['project_id', 'name', 'position',];
@@ -29,10 +31,16 @@ class BoardColumn extends Model
         });
     }
     
+    /**
+     * @return BelongsTo<Project, $this>
+     */
     public function project(): BelongsTo{
         return $this->belongsTo(Project::class);
     }
 
+    /**
+     * @return HasMany<Task, $this>
+     */
     public function tasks(): HasMany{
         return $this->hasMany(Task::class);
     }

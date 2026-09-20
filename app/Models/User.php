@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -16,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- * @property int $id
+ * @property int<0, max> $id
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
@@ -60,15 +59,21 @@ class User extends Authenticatable
             : $initials;
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
     public function company(): BelongsTo{
         return $this->belongsTo(Company::class);
     }
 
+    /**
+     * @return HasMany<Task, $this>
+     */
     public function assignedTasks(): HasMany{
         return $this->hasMany(Task::class, 'assignee_id');
     }
 
-    public function createCompanyToken(string $name)
+    public function createCompanyToken(string $name): \Laravel\Sanctum\NewAccessToken
     {
         if (! $this->company_id) {
             throw new \RuntimeException(

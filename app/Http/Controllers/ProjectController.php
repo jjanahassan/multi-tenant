@@ -8,6 +8,8 @@ use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\User;
 use App\Http\Requests\TaskFilterRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
@@ -16,7 +18,7 @@ class ProjectController extends Controller
     /**
      * Display a listing of projects.
      */
-    public function index()
+    public function index(): View
     {
         $this->authorize('viewAny', Project::class);
 
@@ -28,7 +30,7 @@ class ProjectController extends Controller
     /**
      * Show the form for creating a project.
      */
-    public function create()
+    public function create(): View
     {
         $this->authorize('create', Project::class);
 
@@ -38,7 +40,7 @@ class ProjectController extends Controller
     /**
      * Show the form for editing the specified project.
      */
-    public function edit(Project $project)
+    public function edit(Project $project): View
     {
         $this->authorize('update', $project);
 
@@ -48,7 +50,7 @@ class ProjectController extends Controller
     /**
      * Store a newly created project.
      */
-    public function store(StoreProjectRequest $request)
+    public function store(StoreProjectRequest $request): RedirectResponse
     {
         $project = Project::create([
             'company_id' => auth()->user()->company_id,
@@ -65,7 +67,7 @@ class ProjectController extends Controller
      * Display the specified project.
      */
 
-public function show(TaskFilterRequest $request, Project $project)
+public function show(TaskFilterRequest $request, Project $project): View
     {
         $filters = $request->validated();
 
@@ -159,7 +161,7 @@ public function show(TaskFilterRequest $request, Project $project)
     public function update(
         UpdateProjectRequest $request,
         Project $project
-    ) {
+    ): RedirectResponse {
         $this->authorize('update', $project);
         
         $project->update($request->validated());
@@ -172,7 +174,7 @@ public function show(TaskFilterRequest $request, Project $project)
     /**
      * Remove the specified project.
      */
-    public function destroy(Project $project)
+    public function destroy(Project $project): RedirectResponse
     {
         $this->authorize('delete', $project);
 

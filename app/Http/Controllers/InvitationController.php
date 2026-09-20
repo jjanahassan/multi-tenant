@@ -8,17 +8,19 @@ use App\Models\Invitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class InvitationController extends Controller
 {
-    public function create()
+    public function create(): View
     {
         $company= auth()->user()->company;
         Gate::authorize('invite', $company);
         return view('invitations.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $company= auth()->user()->company;
         Gate::authorize('invite', $company);

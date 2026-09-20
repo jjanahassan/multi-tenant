@@ -9,12 +9,14 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TaskController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Project $project)
+    public function index(Project $project): AnonymousResourceCollection
     {
         $this->authorize('view', $project);
 
@@ -25,7 +27,7 @@ class TaskController extends Controller
         return TaskResource::collection($tasks);
     }
 
-    public function store(StoreTaskRequest $request, Project $project)
+    public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
         $this->authorize('create', Task::class);
 
@@ -43,14 +45,14 @@ class TaskController extends Controller
             ->setStatusCode(201);
     }
 
-    public function show(Task $task)
+    public function show(Task $task): TaskResource
     {
         $this->authorize('view', $task);
 
         return new TaskResource($task);
     }
 
-    public function update(UpdateTaskRequest $request, Task $task)
+    public function update(UpdateTaskRequest $request, Task $task): TaskResource
     {
         $this->authorize('update', $task);
 
@@ -59,7 +61,7 @@ class TaskController extends Controller
         return new TaskResource($task->fresh());
     }
 
-    public function destroy(Task $task)
+    public function destroy(Task $task): JsonResponse
     {
         $this->authorize('delete', $task);
 

@@ -6,6 +6,7 @@ use App\Models\BoardColumn;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Task;
 
 /**
  * @extends Factory<Task>

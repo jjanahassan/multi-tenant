@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\CompanyScoped;
+use Database\Factories\InvitationFactory;
 
 class Invitation extends Model
 {
+    /** @use HasFactory<InvitationFactory> */
     use HasFactory, CompanyScoped;
 
     protected $fillable= ['company_id', 'email', 'role', 'token', 'expires_at',];
@@ -18,6 +20,9 @@ class Invitation extends Model
         return ['expires_at' => 'datetime',];
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);

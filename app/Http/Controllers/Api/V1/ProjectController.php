@@ -9,6 +9,9 @@ use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProjectController extends Controller
 {
@@ -17,7 +20,7 @@ class ProjectController extends Controller
     /**
      * Display a listing of the authenticated user's projects.
      */
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Project::class);
 
@@ -29,7 +32,7 @@ class ProjectController extends Controller
     /**
      * Store a newly created project.
      */
-    public function store(StoreProjectRequest $request)
+    public function store(StoreProjectRequest $request): JsonResponse
     {
         $project = Project::create([
             'company_id' => $request->user()->company_id,
@@ -45,7 +48,7 @@ class ProjectController extends Controller
     /**
      * Display the specified project.
      */
-    public function show(Project $project)
+    public function show(Project $project): ProjectResource
     {
         $this->authorize('view', $project);
 
@@ -58,7 +61,7 @@ class ProjectController extends Controller
     public function update(
         UpdateProjectRequest $request,
         Project $project
-    ) {
+    ): ProjectResource {
         $project->update($request->validated());
 
         return new ProjectResource($project->fresh());
@@ -67,7 +70,7 @@ class ProjectController extends Controller
     /**
      * Remove the specified project.
      */
-    public function destroy(Project $project)
+    public function destroy(Project $project): JsonResponse
     {
         $this->authorize('delete', $project);
 

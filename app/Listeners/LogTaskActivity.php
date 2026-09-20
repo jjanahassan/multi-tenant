@@ -9,6 +9,7 @@ use App\Events\TaskAssigned;
 use App\Events\TaskCreated;
 use App\Events\TaskMoved;
 use App\Models\Activity;
+use App\Models\Task;
 
 class LogTaskActivity
 {
@@ -55,15 +56,17 @@ class LogTaskActivity
             return;
         }
 
-        if ($event instanceof CommentAdded) {
-            $task = $event->comment->commentable;
+        $task = $event->comment->commentable;
 
-            Activity::create([
-                'task_id' => $task->id,
-                'user_id' => $event->user->id,
-                'action' => 'commented',
-                'description' => 'A comment was added.',
-            ]);
+        if (! $task instanceof Task) {
+            return;
         }
+
+        Activity::create([
+            'task_id' => $task->id,
+            'user_id' => $event->user->id,
+            'action' => 'commented',
+            'description' => 'A comment was added.',
+        ]);
     }
 }

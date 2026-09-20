@@ -13,12 +13,14 @@ use App\Events\TaskCreated;
 use App\Events\TaskAssigned;
 use App\Events\TaskMoved;
 use App\Services\PositionCalculator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class TaskController extends Controller
 {
     use AuthorizesRequests;
 
-    public function store(StoreTaskRequest $request, Project $project)
+    public function store(StoreTaskRequest $request, Project $project): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -55,7 +57,7 @@ class TaskController extends Controller
         return back()->with('success', 'Task created successfully.');
     }
 
-    public function update(UpdateTaskRequest $request, Project $project, Task $task){
+    public function update(UpdateTaskRequest $request, Project $project, Task $task): RedirectResponse {
         abort_unless($task->project_id === $project->id, 404);
 
         $previousAssigneeId = $task->assignee_id;
@@ -75,7 +77,7 @@ class TaskController extends Controller
         return back()-> with('success', 'Task updated successfully.');
     }
 
-    public function destroy(Project $project, Task $task){
+    public function destroy(Project $project, Task $task): RedirectResponse {
         abort_unless($task->project_id === $project->id, 404);
 
         $this->authorize('update', $project);
@@ -84,7 +86,7 @@ class TaskController extends Controller
         return back()-> with('success', 'Task deleted successfully.');
     }
 
-    public function move(MoveTaskRequest $request, Project $project, Task $task) {
+    public function move(MoveTaskRequest $request, Project $project, Task $task): JsonResponse {
         abort_unless($task->project_id === $project->id, 404);
 
         $validated = $request->validated();

@@ -5,7 +5,11 @@ namespace Database\Factories;
 use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use App\Models\Invitation;
 
+/**
+ * @extends Factory<Invitation>
+ */
 class InvitationFactory extends Factory
 {
     public function definition(): array

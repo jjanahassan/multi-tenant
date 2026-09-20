@@ -6,6 +6,7 @@ use App\Models\Comment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use App\Models\Task;
 
 class TaskCommentedNotification extends Notification implements ShouldQueue
 {
@@ -15,14 +16,24 @@ class TaskCommentedNotification extends Notification implements ShouldQueue
         public Comment $comment
     ) {}
 
+    /**
+     * @return array<int, string>
+     */
     public function via(object $notifiable): array
     {
         return ['database'];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toDatabase(object $notifiable): array
     {
         $task = $this->comment->commentable;
+
+        if (! $task instanceof Task) {
+            throw new \LogicException('Comment must belong to a task.');
+        }
 
         return [
             'type' => 'task_commented',
