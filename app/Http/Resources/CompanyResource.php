@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Models\Company;
 
 class CompanyResource extends JsonResource
 {

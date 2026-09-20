@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\BoardColumn;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\Task;

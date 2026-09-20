@@ -124,13 +124,13 @@ test('authenticated owner can update a task through the api', function () {
     $token = $user->createCompanyToken('test-token');
 
     $response = $this->withToken($token->plainTextToken)
-    ->putJson("/api/v1/tasks/{$task->id}", [
-        'title' => 'Updated title',
-        'description' => $task->description,
-        'board_column_id' => $boardColumn->id,
-        'assignee_id' => $task->assignee_id,
-        'due_date' => $task->due_date?->toDateString(),
-    ]);
+        ->putJson("/api/v1/tasks/{$task->id}", [
+            'title' => 'Updated title',
+            'description' => $task->description,
+            'board_column_id' => $boardColumn->id,
+            'assignee_id' => $task->assignee_id,
+            'due_date' => $task->due_date?->toDateString(),
+        ]);
 
     $response
         ->assertOk()

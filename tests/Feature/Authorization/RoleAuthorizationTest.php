@@ -6,7 +6,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-
 test('owner can invite a teammate', function () {
     $company = Company::create([
         'name' => 'Company A',
@@ -51,7 +50,6 @@ test('owner can delete their company', function () {
 
     expect($owner->can('delete', $company))->toBeTrue();
 });
-
 
 test('admin can invite a teammate', function () {
     $company = Company::create([
@@ -98,7 +96,6 @@ test('admin cannot delete the company', function () {
     expect($admin->can('delete', $company))->toBeFalse();
 });
 
-
 test('member cannot invite a teammate', function () {
     $company = Company::create([
         'name' => 'Company A',
@@ -143,7 +140,6 @@ test('member cannot delete the company', function () {
 
     expect($member->can('delete', $company))->toBeFalse();
 });
-
 
 test('user cannot perform company actions on another company', function () {
     $companyA = Company::create([

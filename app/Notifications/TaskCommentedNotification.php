@@ -3,10 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Comment;
+use App\Models\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
-use App\Models\Task;
 
 class TaskCommentedNotification extends Notification implements ShouldQueue
 {

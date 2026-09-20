@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TaskAssigned;
+use App\Events\TaskCreated;
+use App\Events\TaskMoved;
+use App\Http\Requests\MoveTaskRequest;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Project;
 use App\Models\Task;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Http\Requests\MoveTaskRequest;
-use Illuminate\Support\Facades\DB;
-use App\Events\TaskCreated;
-use App\Events\TaskAssigned;
-use App\Events\TaskMoved;
 use App\Services\PositionCalculator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -29,7 +29,7 @@ class TaskController extends Controller
             ->where('board_column_id', $validated['board_column_id'])
             ->max('position');
 
-        $nextPosition = (new PositionCalculator())
+        $nextPosition = (new PositionCalculator)
             ->nextPosition($maxPosition);
 
         $task = $project->tasks()->create([
@@ -57,7 +57,8 @@ class TaskController extends Controller
         return back()->with('success', 'Task created successfully.');
     }
 
-    public function update(UpdateTaskRequest $request, Project $project, Task $task): RedirectResponse {
+    public function update(UpdateTaskRequest $request, Project $project, Task $task): RedirectResponse
+    {
         abort_unless($task->project_id === $project->id, 404);
 
         $previousAssigneeId = $task->assignee_id;
@@ -74,19 +75,21 @@ class TaskController extends Controller
             );
         }
 
-        return back()-> with('success', 'Task updated successfully.');
+        return back()->with('success', 'Task updated successfully.');
     }
 
-    public function destroy(Project $project, Task $task): RedirectResponse {
+    public function destroy(Project $project, Task $task): RedirectResponse
+    {
         abort_unless($task->project_id === $project->id, 404);
 
         $this->authorize('update', $project);
         $task->delete();
 
-        return back()-> with('success', 'Task deleted successfully.');
+        return back()->with('success', 'Task deleted successfully.');
     }
 
-    public function move(MoveTaskRequest $request, Project $project, Task $task): JsonResponse {
+    public function move(MoveTaskRequest $request, Project $project, Task $task): JsonResponse
+    {
         abort_unless($task->project_id === $project->id, 404);
 
         $validated = $request->validated();
@@ -94,7 +97,7 @@ class TaskController extends Controller
         $newColumnId = $validated['board_column_id'];
 
         DB::transaction(function () use ($task, $validated, $oldColumnId, $newColumnId) {
-            
+
             $newPosition = $validated['position'];
 
             if ($oldColumnId !== $newColumnId) {

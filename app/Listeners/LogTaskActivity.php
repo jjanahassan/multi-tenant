@@ -2,8 +2,6 @@
 
 namespace App\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use App\Events\CommentAdded;
 use App\Events\TaskAssigned;
 use App\Events\TaskCreated;
@@ -26,33 +24,36 @@ class LogTaskActivity
      */
     public function handle(TaskCreated|TaskMoved|TaskAssigned|CommentAdded $event): void
     {
-        if ($event instanceof TaskCreated){
+        if ($event instanceof TaskCreated) {
             Activity::create([
-                'user_id'=> $event->user->id,
-                'task_id'=> $event->task->id,
-                'action'=>'created',
-                'description'=>'Task was created.',
+                'user_id' => $event->user->id,
+                'task_id' => $event->task->id,
+                'action' => 'created',
+                'description' => 'Task was created.',
             ]);
+
             return;
         }
 
-        if ($event instanceof TaskMoved){
+        if ($event instanceof TaskMoved) {
             Activity::create([
-                'user_id'=> $event->user->id,
-                'task_id'=> $event->task->id,
-                'action'=>'moved',
-                'description'=>'Task was moved to another column.',
+                'user_id' => $event->user->id,
+                'task_id' => $event->task->id,
+                'action' => 'moved',
+                'description' => 'Task was moved to another column.',
             ]);
+
             return;
         }
 
-        if ($event instanceof TaskAssigned){
+        if ($event instanceof TaskAssigned) {
             Activity::create([
-                'user_id'=> $event->user->id,
-                'task_id'=> $event->task->id,
-                'action'=>'assigned',
-                'description'=>'Task was assigned to a teammate.',
+                'user_id' => $event->user->id,
+                'task_id' => $event->task->id,
+                'action' => 'assigned',
+                'description' => 'Task was assigned to a teammate.',
             ]);
+
             return;
         }
 

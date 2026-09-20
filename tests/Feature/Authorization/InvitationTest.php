@@ -1,11 +1,11 @@
 <?php
 
+use App\Jobs\SendTeamInvitation;
 use App\Models\Company;
 use App\Models\Invitation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use App\Jobs\SendTeamInvitation;
 
 uses(RefreshDatabase::class);
 
@@ -155,7 +155,7 @@ test('invitation always belongs to the authenticated users company', function ()
 });
 
 test('user can only query invitations from their company', function () {
-     $companyA = Company::factory()->create();
+    $companyA = Company::factory()->create();
     $companyB = Company::factory()->create();
 
     $userA = User::factory()->create([
@@ -175,7 +175,7 @@ test('user can only query invitations from their company', function () {
 
     $invitations = Invitation::all();
 
-     $this->assertTrue(
+    $this->assertTrue(
         $invitations->contains('id', $invitationA->id)
     );
 

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Database\Factories\TaskFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,44 +27,50 @@ class Task extends Model
     /** @use HasFactory<TaskFactory> */
     use HasFactory;
 
-    protected $fillable=['project_id', 'board_column_id', 'assignee_id', 'title', 'description', 'due_date', 'position', ];
+    protected $fillable = ['project_id', 'board_column_id', 'assignee_id', 'title', 'description', 'due_date', 'position'];
 
-    protected function casts(): array{
-        return ['due_date'=> 'date', ];
+    protected function casts(): array
+    {
+        return ['due_date' => 'date'];
     }
 
     /**
      * @return BelongsTo<Project, $this>
      */
-    public function project(): BelongsTo{
+    public function project(): BelongsTo
+    {
         return $this->belongsTo(Project::class);
     }
 
     /**
      * @return BelongsTo<BoardColumn, $this>
      */
-    public function boardColumn(): BelongsTo{
+    public function boardColumn(): BelongsTo
+    {
         return $this->belongsTo(BoardColumn::class);
     }
 
     /**
      * @return BelongsTo<User, $this>
      */
-    public function assignee(): BelongsTo{
+    public function assignee(): BelongsTo
+    {
         return $this->belongsTo(User::class, 'assignee_id');
     }
 
     /**
      * @return MorphMany<Comment, $this>
      */
-    public function comments(): MorphMany{
+    public function comments(): MorphMany
+    {
         return $this->morphMany(Comment::class, 'commentable');
     }
 
     /**
      * @return HasMany<Activity, $this>
      */
-    public function activities(): HasMany{
+    public function activities(): HasMany
+    {
         return $this->hasMany(Activity::class);
     }
 

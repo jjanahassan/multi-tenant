@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CompanyController extends Controller
@@ -20,7 +20,7 @@ class CompanyController extends Controller
         return view('company.users', compact('company', 'users'));
     }
 
-     public function removeUser(Company $company, User $user): RedirectResponse
+    public function removeUser(Company $company, User $user): RedirectResponse
     {
         Gate::authorize('removeUser', $company);
 

@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\Company;
+use App\Models\Invitation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use App\Models\Invitation;
 
 /**
  * @extends Factory<Invitation>

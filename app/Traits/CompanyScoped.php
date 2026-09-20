@@ -13,7 +13,7 @@ trait CompanyScoped
         static::addGlobalScope('company', function (Builder $builder) {
             if (Auth::check()) {
                 $builder->where(
-                    $builder->getModel()->getTable() . '.company_id',
+                    $builder->getModel()->getTable().'.company_id',
                     Auth::user()->company_id
                 );
             }

@@ -3,8 +3,6 @@
 namespace App\Listeners;
 
 use App\Events\TaskAssigned;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use App\Notifications\TaskAssignedNotification;
 
 class SendTaskAssignedNotification
@@ -24,11 +22,11 @@ class SendTaskAssignedNotification
     {
         $assignee = $event->task->assignee;
 
-        if(!$assignee){
+        if (! $assignee) {
             return;
         }
 
-        if($assignee->id === $event->user->id){
+        if ($assignee->id === $event->user->id) {
             return;
         }
 

@@ -1,11 +1,12 @@
 <?php
 
+use App\Models\Activity;
 use App\Models\Comment;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Activity;
+use App\Notifications\TaskCommentedNotification;
 
 test('user can comment on a task', function () {
     $company = Company::factory()->create();
@@ -181,7 +182,7 @@ test('commenting through the HTTP endpoint creates notification and activity', f
 
     expect(
         $assignee->notifications()
-            ->where('type', \App\Notifications\TaskCommentedNotification::class)
+            ->where('type', TaskCommentedNotification::class)
             ->exists()
     )->toBeTrue();
 });

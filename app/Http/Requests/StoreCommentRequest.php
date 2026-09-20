@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Task;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Task;
 
 class StoreCommentRequest extends FormRequest
 {
@@ -32,7 +32,7 @@ class StoreCommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body'=> ['required', 'string', 'max:5000', ],
+            'body' => ['required', 'string', 'max:5000'],
         ];
     }
 }

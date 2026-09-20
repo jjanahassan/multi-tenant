@@ -6,22 +6,22 @@ use App\Http\Requests\StoreBoardColumnRequest;
 use App\Http\Requests\UpdateBoardColumnRequest;
 use App\Models\BoardColumn;
 use App\Models\Project;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\DB;
 use App\Services\PositionCalculator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class BoardColumnController extends Controller
 {
     use AuthorizesRequests;
-    
+
     public function store(
         StoreBoardColumnRequest $request,
         Project $project
     ): RedirectResponse {
         $maxPosition = $project->boardColumns()->max('position');
 
-        $nextPosition = (new PositionCalculator())
+        $nextPosition = (new PositionCalculator)
             ->nextPosition($maxPosition);
 
         $project->boardColumns()->create([

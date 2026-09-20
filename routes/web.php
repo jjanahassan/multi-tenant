@@ -1,19 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\BoardColumnController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskController;
+use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
-    
+
     // Switch Company Routes
     Route::get('/switch-company', function () {
         return view('switch-company');
@@ -87,7 +87,7 @@ Route::middleware('auth')->scopeBindings()->group(function () {
         '/projects/{project}/tasks/{task}/move',
         [TaskController::class, 'move']
     )->name('projects.tasks.move');
-    
+
     Route::post(
         '/tasks/{task}/comments',
         [CommentController::class, 'store']

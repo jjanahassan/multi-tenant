@@ -3,18 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\TaskFilterRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\User;
-use App\Http\Requests\TaskFilterRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
     use AuthorizesRequests;
-    
+
     /**
      * Display a listing of projects.
      */
@@ -66,8 +65,7 @@ class ProjectController extends Controller
     /**
      * Display the specified project.
      */
-
-public function show(TaskFilterRequest $request, Project $project): View
+    public function show(TaskFilterRequest $request, Project $project): View
     {
         $filters = $request->validated();
 
@@ -102,11 +100,11 @@ public function show(TaskFilterRequest $request, Project $project): View
                         if ($search) {
                             $taskQuery->where(function ($query) use ($search) {
                                 $query
-                                    ->where('title', 'like', '%' . $search . '%')
+                                    ->where('title', 'like', '%'.$search.'%')
                                     ->orWhere(
                                         'description',
                                         'like',
-                                        '%' . $search . '%'
+                                        '%'.$search.'%'
                                     );
                             });
                         }
@@ -163,7 +161,7 @@ public function show(TaskFilterRequest $request, Project $project): View
         Project $project
     ): RedirectResponse {
         $this->authorize('update', $project);
-        
+
         $project->update($request->validated());
 
         return redirect()

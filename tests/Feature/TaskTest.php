@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\BoardColumn;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\Task;
@@ -665,9 +664,9 @@ test('filter validation prevents selecting a board column from another project',
 });
 
 test('task board does not have an n plus one query problem', function () {
-    $company = \App\Models\Company::factory()->create();
+    $company = Company::factory()->create();
 
-    $user = \App\Models\User::factory()->create([
+    $user = User::factory()->create([
         'company_id' => $company->id,
         'role' => 'owner',
     ]);
@@ -676,13 +675,13 @@ test('task board does not have an n plus one query problem', function () {
         'owner_id' => $user->id,
     ]);
 
-    $project = \App\Models\Project::factory()->create([
+    $project = Project::factory()->create([
         'company_id' => $company->id,
     ]);
 
     $column = $project->boardColumns()->first();
 
-    \App\Models\Task::factory()
+    Task::factory()
         ->count(20)
         ->create([
             'project_id' => $project->id,
@@ -690,7 +689,7 @@ test('task board does not have an n plus one query problem', function () {
             'assignee_id' => $user->id,
         ]);
 
-    \DB::enableQueryLog();
+    DB::enableQueryLog();
 
     $response = $this
         ->actingAs($user)
@@ -698,15 +697,14 @@ test('task board does not have an n plus one query problem', function () {
 
     $response->assertSuccessful();
 
-    $queries = \DB::getQueryLog();
+    $queries = DB::getQueryLog();
 
     $assigneeQueries = collect($queries)
         ->filter(
-            fn ($query) =>
-                str_contains(
-                    strtolower($query['query']),
-                    'select * from "users" where "users"."id"'
-                )
+            fn ($query) => str_contains(
+                strtolower($query['query']),
+                'select * from "users" where "users"."id"'
+            )
         );
 
     expect($assigneeQueries)->toHaveCount(1);
@@ -715,7 +713,7 @@ test('task board does not have an n plus one query problem', function () {
 });
 
 test('tasks table has an index for due date filtering', function () {
-    $indexes = \DB::select("PRAGMA index_list('tasks')");
+    $indexes = DB::select("PRAGMA index_list('tasks')");
 
     $indexNames = collect($indexes)
         ->pluck('name')
@@ -727,9 +725,9 @@ test('tasks table has an index for due date filtering', function () {
 });
 
 test('task board remains efficient with a large number of tasks', function () {
-    $company = \App\Models\Company::factory()->create();
+    $company = Company::factory()->create();
 
-    $user = \App\Models\User::factory()->create([
+    $user = User::factory()->create([
         'company_id' => $company->id,
         'role' => 'owner',
     ]);
@@ -738,13 +736,13 @@ test('task board remains efficient with a large number of tasks', function () {
         'owner_id' => $user->id,
     ]);
 
-    $project = \App\Models\Project::factory()->create([
+    $project = Project::factory()->create([
         'company_id' => $company->id,
     ]);
 
     $column = $project->boardColumns()->first();
 
-    \App\Models\Task::factory()
+    Task::factory()
         ->count(1000)
         ->create([
             'project_id' => $project->id,
@@ -752,7 +750,7 @@ test('task board remains efficient with a large number of tasks', function () {
             'assignee_id' => $user->id,
         ]);
 
-    \DB::enableQueryLog();
+    DB::enableQueryLog();
 
     $start = microtime(true);
 
@@ -764,10 +762,10 @@ test('task board remains efficient with a large number of tasks', function () {
 
     $response->assertSuccessful();
 
-    $queryCount = count(\DB::getQueryLog());
+    $queryCount = count(DB::getQueryLog());
 
-    dump('Board load time: ' . round($duration * 1000, 2) . ' ms');
-    dump('Board query count: ' . $queryCount);
+    dump('Board load time: '.round($duration * 1000, 2).' ms');
+    dump('Board query count: '.$queryCount);
 
     expect($queryCount)->toBeLessThan(15);
 });

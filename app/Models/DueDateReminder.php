@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DueDateReminder extends Model
 {
-    protected $fillable = ['task_id', 'assignee_id', 'due_date', 'sent_at', ];
+    protected $fillable = ['task_id', 'assignee_id', 'due_date', 'sent_at'];
 
     protected function casts(): array
     {

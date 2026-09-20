@@ -6,13 +6,14 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\NewAccessToken;
 
 /**
  * @property int<0, max> $id
@@ -32,7 +33,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -62,18 +63,20 @@ class User extends Authenticatable
     /**
      * @return BelongsTo<Company, $this>
      */
-    public function company(): BelongsTo{
+    public function company(): BelongsTo
+    {
         return $this->belongsTo(Company::class);
     }
 
     /**
      * @return HasMany<Task, $this>
      */
-    public function assignedTasks(): HasMany{
+    public function assignedTasks(): HasMany
+    {
         return $this->hasMany(Task::class, 'assignee_id');
     }
 
-    public function createCompanyToken(string $name): \Laravel\Sanctum\NewAccessToken
+    public function createCompanyToken(string $name): NewAccessToken
     {
         if (! $this->company_id) {
             throw new \RuntimeException(

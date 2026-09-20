@@ -32,7 +32,7 @@ class RegisteredUserController extends Controller
         $user = DB::transaction(function () use ($request) {
             // 1. Create the company
             $company = Company::create([
-                'name' => $request->name . "'s Company",
+                'name' => $request->name."'s Company",
                 'owner_id' => null,
                 'is_active' => true,
             ]);
