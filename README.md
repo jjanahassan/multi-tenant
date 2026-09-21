@@ -1,6 +1,6 @@
 # Multi-Tenant Laravel Application
 
-A multi-tenant Laravel application with company-based authentication, role-based authorization, tenant data isolation, project management, customizable Kanban boards, tasks, comments, activity tracking, database notifications, background jobs, due-date reminders, and a versioned public JSON API using Laravel Sanctum.
+A multi-tenant Laravel application with company-based authentication, role-based authorization, tenant data isolation, project management, customizable Kanban boards, tasks, comments, activity tracking, database notifications, background jobs, due-date reminders, a versioned public JSON API using Laravel Sanctum, automated testing, static analysis, and continuous integration.
 
 ## 🚀 Features
 
@@ -48,6 +48,9 @@ A multi-tenant Laravel application with company-based authentication, role-based
 - **Database Indexing**: Indexes were added based on actual filtering and sorting requirements.
 - **Performance Testing**: Board query count and load time are measured with large task datasets.
 - **Feature Testing**: Authentication, authorization, tenant isolation, projects, tasks, comments, notifications, queues, API functionality, and performance are covered by tests.
+- **Unit Testing**: Reusable application logic is covered with focused unit tests.
+- **Static Analysis**: Larastan/PHPStan is used to detect type and code-quality issues.
+- **Automated CI**: GitHub Actions runs formatting checks, static analysis, and the full test suite.
 
 ## 🛠️ Tech Stack
 
@@ -59,8 +62,10 @@ A multi-tenant Laravel application with company-based authentication, role-based
 - **Database**: SQLite
 - **Queue**: Laravel Database Queue
 - **Testing**: Pest
+- **Static Analysis**: Larastan / PHPStan
 - **Build Tool**: Vite
 - **Package Manager**: Composer / NPM
+- **CI**: GitHub Actions
 
 ## 📋 Requirements
 
@@ -73,40 +78,28 @@ A multi-tenant Laravel application with company-based authentication, role-based
 
 ### 1. Clone the Repository
 
-```bash
-git clone https://github.com/jjanahassan/multi-tenant.git
-cd multi-tenant
-```
+    git clone https://github.com/jjanahassan/multi-tenant.git
+    cd multi-tenant
 
 ### 2. Install PHP Dependencies
 
-```bash
-composer install
-```
+    composer install
 
 ### 3. Install Frontend Dependencies
 
-```bash
-npm install
-```
+    npm install
 
 ### 4. Create the Environment File
 
-```bash
-cp .env.example .env
-```
+    cp .env.example .env
 
 For Windows PowerShell:
 
-```powershell
-Copy-Item .env.example .env
-```
+    Copy-Item .env.example .env
 
 ### 5. Generate the Application Key
 
-```bash
-php artisan key:generate
-```
+    php artisan key:generate
 
 ### 6. Configure the Database
 
@@ -114,61 +107,43 @@ The application uses SQLite by default.
 
 Create:
 
-```text
-database/database.sqlite
-```
+    database/database.sqlite
 
 Then configure `.env`:
 
-```env
-DB_CONNECTION=sqlite
-```
+    DB_CONNECTION=sqlite
 
 ### 7. Configure the Queue
 
 The application uses Laravel's database queue:
 
-```env
-QUEUE_CONNECTION=database
-```
+    QUEUE_CONNECTION=database
 
 ### 8. Run Migrations
 
-```bash
-php artisan migrate
-```
+    php artisan migrate
 
 ### 9. Build Frontend Assets
 
-```bash
-npm run build
-```
+    npm run build
 
 ### 10. Start the Application
 
-```bash
-php artisan serve
-```
+    php artisan serve
 
 The application will be available at:
 
-```text
-http://127.0.0.1:8000
-```
+    http://127.0.0.1:8000
 
 For frontend development:
 
-```bash
-npm run dev
-```
+    npm run dev
 
 ### 11. Start the Queue Worker
 
 Background jobs require a running queue worker:
 
-```bash
-php artisan queue:work
-```
+    php artisan queue:work
 
 ## 🗄️ Database Structure
 
@@ -177,7 +152,7 @@ php artisan queue:work
 The `companies` table represents each tenant.
 
 | Column | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `id` | bigint | Primary key |
 | `name` | string | Company name |
 | `owner_id` | bigint | Company owner |
@@ -190,7 +165,7 @@ The `companies` table represents each tenant.
 Users belong to a company through `company_id`.
 
 | Column | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `id` | bigint | Primary key |
 | `name` | string | User name |
 | `email` | string | Unique email |
@@ -205,7 +180,7 @@ Users belong to a company through `company_id`.
 Projects belong to a company.
 
 | Column | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `id` | bigint | Primary key |
 | `company_id` | bigint | Owning company |
 | `name` | string | Project name |
@@ -218,7 +193,7 @@ Projects belong to a company.
 Board columns belong to a project.
 
 | Column | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `id` | bigint | Primary key |
 | `project_id` | bigint | Parent project |
 | `name` | string | Column name |
@@ -228,16 +203,14 @@ Board columns belong to a project.
 
 New projects automatically receive:
 
-```text
-To Do → In Progress → Done
-```
+    To Do → In Progress → Done
 
 ### Tasks
 
 Tasks belong to projects and board columns.
 
 | Column | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `id` | bigint | Primary key |
 | `project_id` | bigint | Parent project |
 | `board_column_id` | bigint | Current board column |
@@ -257,22 +230,18 @@ Comments use a polymorphic relationship and are currently associated with tasks.
 
 Activities record important task events such as:
 
-```text
-TaskCreated
-TaskMoved
-TaskAssigned
-CommentAdded
-```
+    TaskCreated
+    TaskMoved
+    TaskAssigned
+    CommentAdded
 
 ### Notifications
 
 Laravel's database notification system is used for:
 
-```text
-task_assigned
-task_commented
-task_due_soon
-```
+    task_assigned
+    task_commented
+    task_due_soon
 
 Notifications contain a persistent `read_at` value.
 
@@ -282,9 +251,7 @@ The `due_date_reminders` table provides persistent tracking for reminder process
 
 The reminder record uses:
 
-```text
-task_id + assignee_id + due_date
-```
+    task_id + assignee_id + due_date
 
 as a unique combination to prevent duplicate reminders.
 
@@ -292,58 +259,54 @@ as a unique combination to prevent duplicate reminders.
 
 Laravel's database queue uses:
 
-```text
-jobs
-failed_jobs
-```
+    jobs
+    failed_jobs
 
 to manage pending and failed background jobs.
 
 ## 🔗 Database Relationships
 
-```text
-Company
-│
-├── hasMany Users
-├── hasMany Projects
-└── hasMany Invitations
+    Company
+    │
+    ├── hasMany Users
+    ├── hasMany Projects
+    └── hasMany Invitations
 
-User
-│
-├── belongsTo Company
-├── hasMany Assigned Tasks
-└── hasMany Comments
+    User
+    │
+    ├── belongsTo Company
+    ├── hasMany Assigned Tasks
+    └── hasMany Comments
 
-Project
-│
-├── belongsTo Company
-├── hasMany Board Columns
-└── hasMany Tasks
+    Project
+    │
+    ├── belongsTo Company
+    ├── hasMany Board Columns
+    └── hasMany Tasks
 
-BoardColumn
-│
-├── belongsTo Project
-└── hasMany Tasks
+    BoardColumn
+    │
+    ├── belongsTo Project
+    └── hasMany Tasks
 
-Task
-│
-├── belongsTo Project
-├── belongsTo BoardColumn
-├── belongsTo User (assignee)
-├── morphMany Comments
-├── hasMany Activities
-└── hasMany Due Date Reminders
+    Task
+    │
+    ├── belongsTo Project
+    ├── belongsTo BoardColumn
+    ├── belongsTo User (assignee)
+    ├── morphMany Comments
+    ├── hasMany Activities
+    └── hasMany Due Date Reminders
 
-Comment
-│
-├── belongsTo User
-└── morphTo Commentable
+    Comment
+    │
+    ├── belongsTo User
+    └── morphTo Commentable
 
-DueDateReminder
-│
-├── belongsTo Task
-└── belongsTo User
-```
+    DueDateReminder
+    │
+    ├── belongsTo Task
+    └── belongsTo User
 
 ## 🏢 Multi-Tenancy
 
@@ -351,15 +314,11 @@ The application uses company-based multi-tenancy.
 
 Every authenticated user belongs to a company:
 
-```text
-users.company_id
-```
+    users.company_id
 
 Projects belong to companies:
 
-```text
-projects.company_id
-```
+    projects.company_id
 
 Tasks belong to projects, and board columns belong to projects.
 
@@ -442,11 +401,11 @@ Every project belongs to one company.
 
 Each project automatically receives three default columns:
 
-```text
-To Do
-In Progress
-Done
-```
+    To Do
+
+    In Progress
+
+    Done
 
 Authorized users can:
 
@@ -478,19 +437,17 @@ Tasks can only be assigned to users belonging to the same company as the project
 
 When a task is assigned:
 
-```text
-TaskAssigned Event
-        ↓
-Activity Listener
-        ↓
-Activity Record
+    TaskAssigned Event
+            ↓
+    Activity Listener
+            ↓
+    Activity Record
 
-TaskAssigned Event
-        ↓
-Notification Listener
-        ↓
-Database Notification
-```
+    TaskAssigned Event
+            ↓
+    Notification Listener
+            ↓
+    Database Notification
 
 The user performing the assignment does not receive a notification for their own action.
 
@@ -510,10 +467,9 @@ The project board supports:
 
 The search query checks:
 
-```text
-title
-description
-```
+    title
+
+    description
 
 using the current contains-search implementation.
 
@@ -521,9 +477,7 @@ using the current contains-search implementation.
 
 Tasks can be filtered using:
 
-```text
-assignee_id
-```
+    assignee_id
 
 The selected assignee is validated against the current company's users.
 
@@ -531,10 +485,8 @@ The selected assignee is validated against the current company's users.
 
 Tasks can be filtered using:
 
-```text
-due_from
-due_to
-```
+    due_from
+    due_to
 
 The application validates that `due_to` is not earlier than `due_from`.
 
@@ -542,9 +494,7 @@ The application validates that `due_to` is not earlier than `due_from`.
 
 Tasks can be filtered by:
 
-```text
-column_id
-```
+    column_id
 
 The selected column is validated against the current project.
 
@@ -552,10 +502,8 @@ The selected column is validated against the current project.
 
 Tasks can be sorted by:
 
-```text
-sort_due_date=asc
-sort_due_date=desc
-```
+    sort_due_date=asc
+    sort_due_date=desc
 
 ### Combined Filtering
 
@@ -563,13 +511,15 @@ Filters can be combined in a single request.
 
 For example:
 
-```text
-Search: report
-Assignee: User A
-Due From: 2026-09-01
-Due To: 2026-09-30
-Column: In Progress
-```
+    Search: report
+
+    Assignee: User A
+
+    Due From: 2026-09-01
+
+    Due To: 2026-09-30
+
+    Column: In Progress
 
 All applicable filters are applied together at the database query level.
 
@@ -586,13 +536,11 @@ Comments contain:
 
 When a comment is added:
 
-```text
-CommentAdded Event
-        ↓
-Activity Record
-        ↓
-Comment Notification
-```
+    CommentAdded Event
+            ↓
+    Activity Record
+            ↓
+    Comment Notification
 
 The user who added the comment does not receive a notification for their own comment.
 
@@ -602,12 +550,10 @@ Activity tracking uses Laravel Events and Listeners.
 
 Tracked actions include:
 
-```text
-TaskCreated
-TaskMoved
-TaskAssigned
-CommentAdded
-```
+    TaskCreated
+    TaskMoved
+    TaskAssigned
+    CommentAdded
 
 The event-driven structure keeps activity tracking separate from the core controller operations.
 
@@ -631,15 +577,11 @@ The task assignee receives a reminder when the task approaches its due date.
 
 Unread notifications have:
 
-```text
-read_at = null
-```
+    read_at = null
 
 When marked as read:
 
-```text
-read_at = current timestamp
-```
+    read_at = current timestamp
 
 The read state is persisted in the database.
 
@@ -649,43 +591,35 @@ The application uses Laravel's database-backed queue system.
 
 Configure:
 
-```env
-QUEUE_CONNECTION=database
-```
+    QUEUE_CONNECTION=database
 
 Start the worker:
 
-```bash
-php artisan queue:work
-```
+    php artisan queue:work
 
 ### Due-Date Reminder Workflow
 
-```text
-Laravel Scheduler
-      ↓
-tasks:send-due-date-reminders
-      ↓
-Find due-soon tasks
-      ↓
-Dispatch SendDueDateReminder Job
-      ↓
-Database Queue
-      ↓
-Queue Worker
-      ↓
-SendDueDateReminder
-      ↓
-Database Notification
-```
+    Laravel Scheduler
+          ↓
+    tasks:send-due-date-reminders
+          ↓
+    Find due-soon tasks
+          ↓
+    Dispatch SendDueDateReminder Job
+          ↓
+    Database Queue
+          ↓
+    Queue Worker
+          ↓
+    SendDueDateReminder
+          ↓
+    Database Notification
 
 ### Reminder Command
 
 Run manually:
 
-```bash
-php artisan tasks:send-due-date-reminders
-```
+    php artisan tasks:send-due-date-reminders
 
 The command identifies eligible due-soon tasks and dispatches reminder jobs.
 
@@ -695,9 +629,7 @@ The command is registered with Laravel Scheduler and runs daily.
 
 Check configured schedules:
 
-```bash
-php artisan schedule:list
-```
+    php artisan schedule:list
 
 ### Retry Configuration
 
@@ -709,27 +641,19 @@ The retry configuration is designed to handle temporary failures without immedia
 
 Failed jobs are stored in:
 
-```text
-failed_jobs
-```
+    failed_jobs
 
 View failed jobs:
 
-```bash
-php artisan queue:failed
-```
+    php artisan queue:failed
 
 Retry a failed job:
 
-```bash
-php artisan queue:retry <id>
-```
+    php artisan queue:retry <id>
 
 Forget a failed job:
 
-```bash
-php artisan queue:forget <id>
-```
+    php artisan queue:forget <id>
 
 ### Idempotency
 
@@ -737,9 +661,7 @@ Reminder processing uses persistent reminder records and deterministic notificat
 
 The unique reminder combination:
 
-```text
-task_id + assignee_id + due_date
-```
+    task_id + assignee_id + due_date
 
 prevents duplicate reminder records for the same task and user.
 
@@ -787,25 +709,29 @@ Validation covers:
 
 Examples include:
 
-```text
-StoreProjectRequest
-UpdateProjectRequest
-StoreBoardColumnRequest
-UpdateBoardColumnRequest
-StoreTaskRequest
-UpdateTaskRequest
-MoveTaskRequest
-StoreCommentRequest
-TaskFilterRequest
-```
+    StoreProjectRequest
+
+    UpdateProjectRequest
+
+    StoreBoardColumnRequest
+
+    UpdateBoardColumnRequest
+
+    StoreTaskRequest
+
+    UpdateTaskRequest
+
+    MoveTaskRequest
+
+    StoreCommentRequest
+
+    TaskFilterRequest
 
 ## 🌐 Public JSON API
 
 The public API is versioned under:
 
-```text
-/api/v1
-```
+    /api/v1
 
 The API uses Laravel Sanctum for authentication.
 
@@ -813,54 +739,42 @@ The API uses Laravel Sanctum for authentication.
 
 Create a token:
 
-```http
-POST /api/v1/auth/token
-```
+    POST /api/v1/auth/token
 
 Example request:
 
-```json
-{
-    "email": "user@example.com",
-    "password": "password",
-    "device_name": "Postman"
-}
-```
+    {
+        "email": "user@example.com",
+        "password": "password",
+        "device_name": "Postman"
+    }
 
 Authenticated requests use:
 
-```http
-Authorization: Bearer <token>
-Accept: application/json
-```
+    Authorization: Bearer <token>
+    Accept: application/json
 
 ### Company
 
-```http
-GET /api/v1/company
-```
+    GET /api/v1/company
 
 Returns the authenticated user's company.
 
 ### Projects
 
-```http
-GET    /api/v1/projects
-POST   /api/v1/projects
-GET    /api/v1/projects/{project}
-PUT    /api/v1/projects/{project}
-DELETE /api/v1/projects/{project}
-```
+    GET    /api/v1/projects
+    POST   /api/v1/projects
+    GET    /api/v1/projects/{project}
+    PUT    /api/v1/projects/{project}
+    DELETE /api/v1/projects/{project}
 
 ### Tasks
 
-```http
-GET    /api/v1/projects/{project}/tasks
-POST   /api/v1/projects/{project}/tasks
-GET    /api/v1/tasks/{task}
-PUT    /api/v1/tasks/{task}
-DELETE /api/v1/tasks/{task}
-```
+    GET    /api/v1/projects/{project}/tasks
+    POST   /api/v1/projects/{project}/tasks
+    GET    /api/v1/tasks/{task}
+    PUT    /api/v1/tasks/{task}
+    DELETE /api/v1/tasks/{task}
 
 ### API Resources
 
@@ -882,33 +796,27 @@ Cross-company resources cannot be accessed through the API.
 
 Authenticated API requests are limited to:
 
-```text
-60 requests per minute
-```
+    60 requests per minute
 
 Requests exceeding the limit receive:
 
-```text
-429 Too Many Requests
-```
+    429 Too Many Requests
 
 ### API Workflow
 
 The complete API workflow covers:
 
-```text
-Authenticate
-    ↓
-Create Project
-    ↓
-Create Task
-    ↓
-Update Task
-    ↓
-Move Task
-    ↓
-Delete Task
-```
+    Authenticate
+        ↓
+    Create Project
+        ↓
+    Create Task
+        ↓
+    Update Task
+        ↓
+    Move Task
+        ↓
+    Delete Task
 
 A Postman collection is included for API testing.
 
@@ -931,44 +839,34 @@ The performance pass covered:
 
 `LargeDatasetSeeder` generates:
 
-```text
-5 companies
-50 users
-25 projects
-75 board columns
-25,000 tasks
-```
+    5 companies
+    50 users
+    25 projects
+    75 board columns
+    25,000 tasks
 
 Each company contains:
 
-```text
-10 users
-5 projects
-```
+    10 users
+    5 projects
 
 Each project contains:
 
-```text
-3 board columns
-1,000 tasks
-```
+    3 board columns
+    1,000 tasks
 
 Tasks are generated using factories and inserted in batches.
 
 ### Run the Seeder
 
-```bash
-php artisan db:seed --class=LargeDatasetSeeder
-```
+    php artisan db:seed --class=LargeDatasetSeeder
 
 Expected totals:
 
-```text
-Companies: 5
-Users: 50
-Projects: 25
-Tasks: 25,000
-```
+    Companies: 5
+    Users: 50
+    Projects: 25
+    Tasks: 25,000
 
 ## 🔍 N+1 Query Detection & Fix
 
@@ -978,24 +876,18 @@ The board was measured using Laravel's database query log before and after eager
 
 A board containing 20 tasks produced:
 
-```text
-28 total database queries
-```
+    28 total database queries
 
 The query log showed:
 
-```sql
-select * from "users" where "users"."id" = ? limit 1
-```
+    select * from "users" where "users"."id" = ? limit 1
 
 This query was executed once for each of the 20 tasks.
 
 The result was:
 
-```text
-1 task query
-20 individual assignee queries
-```
+    1 task query
+    20 individual assignee queries
 
 This was an N+1 query problem caused by lazy-loading each task's assignee relationship.
 
@@ -1005,12 +897,10 @@ The task assignee relationship was eager-loaded in `ProjectController::show()`.
 
 The task query now uses:
 
-```php
-->with([
-    'assignee',
-    'comments.user',
-]);
-```
+    ->with([
+        'assignee',
+        'comments.user',
+    ]);
 
 Laravel therefore loads the required assignees in a single query using a `WHERE IN` condition instead of performing one query for every task.
 
@@ -1018,33 +908,25 @@ Laravel therefore loads the required assignees in a single query using a `WHERE 
 
 The same board containing 20 tasks produced:
 
-```text
-9 total database queries
-```
+    9 total database queries
 
 The 20 individual assignee queries were replaced with one eager-loading query:
 
-```sql
-select * from "users" where "users"."id" in (...)
-```
+    select * from "users" where "users"."id" in (...)
 
 The measured result was:
 
-```text
-Before: 28 queries
-After:   9 queries
+    Before: 28 queries
+    After: 9 queries
 
-Before: 20 individual assignee queries
-After:   1 eager-loading query
-```
+    Before: 20 individual assignee queries
+    After: 1 eager-loading query
 
 This reduced the total query count by 19 queries, approximately 68%.
 
 A regression test was added to the existing:
 
-```text
-tests/Feature/TaskTest.php
-```
+    tests/Feature/TaskTest.php
 
 to ensure the board does not return to the N+1 query pattern.
 
@@ -1056,16 +938,13 @@ Indexes were added based on the actual filtering and sorting requirements instea
 
 The `tasks` table already contains:
 
-```php
-$table->index(['project_id', 'board_column_id']);
-$table->index(['assignee_id']);
-```
+    $table->index(['project_id', 'board_column_id']);
+
+    $table->index(['assignee_id']);
 
 The composite index:
 
-```text
-project_id + board_column_id
-```
+    project_id + board_column_id
 
 supports task queries involving projects and their board columns.
 
@@ -1077,45 +956,35 @@ These indexes were retained and duplicate indexes were not added.
 
 Task 8 introduced due-date filtering and sorting, so an index was added to:
 
-```text
-tasks.due_date
-```
+    tasks.due_date
 
 The migration adds:
 
-```php
-$table->index('due_date');
-```
+    $table->index('due_date');
 
 This supports queries involving:
 
-```text
-due_from
-due_to
-due_date sorting
-```
+    due_from
+
+    due_to
+
+    due_date sorting
 
 The index can be removed during rollback using:
 
-```php
-$table->dropIndex(['due_date']);
-```
+    $table->dropIndex(['due_date']);
 
 ### Why Other Indexes Were Not Added
 
 A separate `project_id` index was not added because `project_id` is already the leftmost column of:
 
-```text
-(project_id, board_column_id)
-```
+    (project_id, board_column_id)
 
 A duplicate `assignee_id` index was not added because one already exists.
 
 A standard B-tree index was not added to `title` or `description` because the current search implementation uses:
 
-```sql
-LIKE '%search%'
-```
+    LIKE '%search%'
 
 A leading wildcard generally prevents a normal B-tree index from being useful for this type of contains-search.
 
@@ -1125,31 +994,23 @@ If search requirements grow significantly in the future, a dedicated full-text s
 
 A dedicated performance test was added to the existing:
 
-```text
-tests/Feature/TaskTest.php
-```
+    tests/Feature/TaskTest.php
 
 The test measured the task board with a large number of tasks.
 
 The measured result was:
 
-```text
-Board load time: 251.41 ms
-Board query count: 9
-```
+    Board load time: 251.41 ms
+    Board query count: 9
 
 The performance test passed with:
 
-```text
-2 assertions
-```
+    2 assertions
 
 The board therefore completed the measured performance test with:
 
-```text
-9 database queries
-251.41 ms measured load time
-```
+    9 database queries
+    251.41 ms measured load time
 
 The large dataset seeder independently provides a realistic dataset containing 25,000 tasks for large-scale testing.
 
@@ -1194,279 +1055,451 @@ The application contains feature tests covering:
 
 Task 8 task-related tests were added to the existing:
 
-```text
-tests/Feature/TaskTest.php
-```
+    tests/Feature/TaskTest.php
 
 ### Run the Complete Test Suite
 
-```bash
-php artisan test
-```
+    php artisan test
 
 ### Run Task Tests
 
-```bash
-php artisan test tests/Feature/TaskTest.php
-```
+    php artisan test tests/Feature/TaskTest.php
 
 ### Run the Performance Test
 
-```bash
-php artisan test tests/Feature/TaskTest.php --filter="task board remains efficient with a large number of tasks"
-```
+    php artisan test tests/Feature/TaskTest.php --filter="task board remains efficient with a large number of tasks"
 
 Expected performance output:
 
-```text
-Board load time: 251.41 ms
-Board query count: 9
-```
+    Board load time: 251.41 ms
+    Board query count: 9
 
 ### Run the Large Dataset Seeder Test
 
-```bash
-php artisan test tests/Feature/LargeDatasetSeederTest.php
-```
+    php artisan test tests/Feature/LargeDatasetSeederTest.php
 
 ### Run Due-Date Reminder Tests
 
-```bash
-php artisan test tests/Feature/SendDueDateReminderJobTest.php
-php artisan test tests/Feature/SendDueDateRemindersCommandTest.php
-```
+    php artisan test tests/Feature/SendDueDateReminderJobTest.php
+
+    php artisan test tests/Feature/SendDueDateRemindersCommandTest.php
 
 ### Run Comment Tests
 
-```bash
-php artisan test --filter="CommentTest"
-```
+    php artisan test --filter="CommentTest"
 
 ### Run Notification Tests
 
-```bash
-php artisan test --filter="NotificationTest"
-```
+    php artisan test --filter="NotificationTest"
+
+## 🧪 Automated Quality Checks
+
+Task 9 introduced automated quality checks for the application.
+
+### Pest Test Suite
+
+The complete Laravel test suite can be run using:
+
+    php artisan test
+
+The test suite covers the major application workflows including:
+
+- Tenant isolation
+- Authorization
+- Kanban task movement
+- Activity logging
+- Notifications
+- API authentication
+- API workflows
+- Search and filtering
+- Background jobs
+- Performance-related behavior
+
+### Unit Tests
+
+Reusable application logic is covered by focused unit tests.
+
+The `PositionCalculator` service handles position calculations used by tasks and board columns.
+
+Unit coverage includes:
+
+    No existing positions → position 0
+
+    Maximum position 0 → position 1
+
+    Maximum position 4 → position 5
+
+    Maximum position 10 → position 11
+
+Run the unit tests:
+
+    php artisan test tests/Unit
+
+### Static Analysis
+
+Larastan/PHPStan is configured at level 7.
+
+The project uses:
+
+    larastan/larastan
+    phpstan/phpstan
+
+Static analysis covers:
+
+    app/
+    bootstrap/app.php
+    config/
+    database/
+    routes/
+
+Run PHPStan with:
+
+    vendor/bin/phpstan analyse --memory-limit=512M
+
+The Composer quality workflow also runs PHPStan through:
+
+    composer test
+
+The PHPStan memory limit is configured in the Composer `types:check` script to support analysis of the full Laravel application.
+
+### Code Formatting
+
+Laravel Pint is included in the automated quality workflow.
+
+Check formatting with:
+
+    vendor/bin/pint --test
+
+### Complete Quality Workflow
+
+Run the complete local quality workflow with:
+
+    composer test
+
+The workflow performs:
+
+    Laravel configuration cache clearing
+            ↓
+    Pint formatting check
+            ↓
+    PHPStan/Larastan static analysis
+            ↓
+    Complete Pest/Laravel test suite
+
+## 🔄 Continuous Integration
+
+Task 9 introduced GitHub Actions CI.
+
+The workflow is located at:
+
+    .github/workflows/ci.yml
+
+The workflow runs automatically on:
+
+- Pushes to `main`
+- Pushes to feature branches
+- Pull requests targeting `main`
+
+### CI Workflow
+
+    GitHub Push / Pull Request
+            ↓
+    Checkout Repository
+            ↓
+    Setup PHP 8.5
+            ↓
+    Setup Node.js
+            ↓
+    Validate Composer
+            ↓
+    Install Composer Dependencies
+            ↓
+    Install NPM Dependencies
+            ↓
+    Build Frontend Assets
+            ↓
+    Prepare Laravel Environment
+            ↓
+    Run Composer Test Workflow
+            ↓
+    Pint
+            ↓
+    PHPStan / Larastan
+            ↓
+    Laravel Test Suite
+
+### Frontend Build
+
+CI installs the frontend dependencies and builds the production assets:
+
+    npm ci
+
+    npm run build
+
+This ensures that the Laravel views relying on Vite assets can be tested in a clean CI environment.
+
+### Laravel Environment
+
+The CI environment prepares Laravel using:
+
+    cp .env.example .env
+
+    php artisan key:generate
+
+    touch database/database.sqlite
+
+This provides the application key and SQLite database required by the automated test suite.
+
+### CI Configuration
+
+The workflow uses:
+
+    PHP 8.5
+
+    Node.js 22
+
+    SQLite
+
+    Composer
+
+    NPM
+
+    Laravel Pint
+
+    PHPStan / Larastan
+
+    Pest
+
+### Local Equivalent
+
+The main local quality command is:
+
+    composer test
+
+The CI workflow is designed to reproduce the same formatting, static-analysis, and test checks in a clean GitHub Actions environment.
 
 ## 📂 Project Structure
 
-```text
-app/
-├── Console/
-│   └── Commands/
-│       └── SendDueDateReminders.php
-│
-├── Events/
-│   ├── CommentAdded.php
-│   ├── TaskAssigned.php
-│   ├── TaskCreated.php
-│   └── TaskMoved.php
-│
-├── Http/
-│   ├── Controllers/
-│   │   ├── BoardColumnController.php
-│   │   ├── CommentController.php
-│   │   ├── CompanyController.php
-│   │   ├── InvitationController.php
-│   │   ├── NotificationController.php
-│   │   ├── ProjectController.php
-│   │   └── TaskController.php
-│   │
-│   └── Requests/
-│       ├── StoreBoardColumnRequest.php
-│       ├── UpdateBoardColumnRequest.php
-│       ├── StoreCommentRequest.php
-│       ├── StoreProjectRequest.php
-│       ├── UpdateProjectRequest.php
-│       ├── StoreTaskRequest.php
-│       ├── UpdateTaskRequest.php
-│       ├── MoveTaskRequest.php
-│       └── TaskFilterRequest.php
-│
-├── Jobs/
-│   ├── SendDueDateReminder.php
-│   └── ...
-│
-├── Listeners/
-│   ├── LogTaskActivity.php
-│   ├── SendTaskAssignedNotification.php
-│   └── SendTaskCommentedNotification.php
-│
-├── Models/
-│   ├── Activity.php
-│   ├── BoardColumn.php
-│   ├── Comment.php
-│   ├── Company.php
-│   ├── DueDateReminder.php
-│   ├── Invitation.php
-│   ├── Project.php
-│   ├── Task.php
-│   └── User.php
-│
-├── Notifications/
-│   ├── DueDateReminderNotification.php
-│   ├── TaskAssignedNotification.php
-│   └── TaskCommentedNotification.php
-│
-├── Policies/
-│   ├── CompanyPolicy.php
-│   └── ProjectPolicy.php
-│
-└── Traits/
-    └── CompanyScoped.php
+    app/
 
-database/
-├── factories/
-│   ├── BoardColumnFactory.php
-│   ├── CompanyFactory.php
-│   ├── ProjectFactory.php
-│   └── TaskFactory.php
-│
-├── migrations/
-│   ├── ..._create_companies_table.php
-│   ├── ..._create_projects_table.php
-│   ├── ..._create_board_columns_table.php
-│   ├── ..._create_tasks_table.php
-│   ├── ..._create_comments_table.php
-│   ├── ..._create_activities_table.php
-│   ├── ..._create_due_date_reminders_table.php
-│   ├── ..._create_notifications_table.php
-│   ├── ..._create_jobs_table.php
-│   ├── ..._create_failed_jobs_table.php
-│   └── ..._add_due_date_index_to_tasks_table.php
-│
-└── seeders/
-    ├── DatabaseSeeder.php
-    └── LargeDatasetSeeder.php
+    ├── Actions/
+    │   └── Fortify/
+    │       └── CreateNewUser.php
+    │
+    ├── Console/
+    │   └── Commands/
+    │       └── SendDueDateReminders.php
+    │
+    ├── Events/
+    │   ├── CommentAdded.php
+    │   ├── TaskAssigned.php
+    │   ├── TaskCreated.php
+    │   └── TaskMoved.php
+    │
+    ├── Http/
+    │   ├── Controllers/
+    │   │   ├── BoardColumnController.php
+    │   │   ├── CommentController.php
+    │   │   ├── CompanyController.php
+    │   │   ├── InvitationController.php
+    │   │   ├── NotificationController.php
+    │   │   ├── ProjectController.php
+    │   │   └── TaskController.php
+    │   │
+    │   └── Requests/
+    │       ├── StoreBoardColumnRequest.php
+    │       ├── UpdateBoardColumnRequest.php
+    │       ├── StoreCommentRequest.php
+    │       ├── StoreProjectRequest.php
+    │       ├── UpdateProjectRequest.php
+    │       ├── StoreTaskRequest.php
+    │       ├── UpdateTaskRequest.php
+    │       ├── MoveTaskRequest.php
+    │       └── TaskFilterRequest.php
+    │
+    ├── Jobs/
+    │   ├── SendDueDateReminder.php
+    │   └── ...
+    │
+    ├── Listeners/
+    │   ├── LogTaskActivity.php
+    │   ├── SendTaskAssignedNotification.php
+    │   └── SendTaskCommentedNotification.php
+    │
+    ├── Models/
+    │   ├── Activity.php
+    │   ├── BoardColumn.php
+    │   ├── Comment.php
+    │   ├── Company.php
+    │   ├── DueDateReminder.php
+    │   ├── Invitation.php
+    │   ├── Project.php
+    │   ├── Task.php
+    │   └── User.php
+    │
+    ├── Notifications/
+    │   ├── DueDateReminderNotification.php
+    │   ├── TaskAssignedNotification.php
+    │   └── TaskCommentedNotification.php
+    │
+    ├── Policies/
+    │   ├── CompanyPolicy.php
+    │   └── ProjectPolicy.php
+    │
+    ├── Services/
+    │   └── PositionCalculator.php
+    │
+    └── Traits/
+        └── CompanyScoped.php
 
-resources/
-└── views/
-    ├── notifications/
-    ├── projects/
-    └── ...
+    database/
 
-routes/
-├── api.php
-├── console.php
-└── web.php
+    ├── factories/
+    │   ├── BoardColumnFactory.php
+    │   ├── CompanyFactory.php
+    │   ├── ProjectFactory.php
+    │   └── TaskFactory.php
+    │
+    ├── migrations/
+    │   ├── ..._create_companies_table.php
+    │   ├── ..._create_projects_table.php
+    │   ├── ..._create_board_columns_table.php
+    │   ├── ..._create_tasks_table.php
+    │   ├── ..._create_comments_table.php
+    │   ├── ..._create_activities_table.php
+    │   ├── ..._create_due_date_reminders_table.php
+    │   ├── ..._create_notifications_table.php
+    │   ├── ..._create_jobs_table.php
+    │   ├── ..._create_failed_jobs_table.php
+    │   └── ..._add_due_date_index_to_tasks_table.php
+    │
+    └── seeders/
+        ├── DatabaseSeeder.php
+        └── LargeDatasetSeeder.php
 
-tests/
-└── Feature/
-    ├── AuthenticationTest.php
-    ├── BoardColumnTest.php
-    ├── CommentTest.php
-    ├── NotificationTest.php
-    ├── ProjectTest.php
-    ├── TaskMoveTest.php
-    ├── TaskTest.php
-    ├── LargeDatasetSeederTest.php
-    ├── SendDueDateReminderJobTest.php
-    └── SendDueDateRemindersCommandTest.php
-```
+    resources/
+    └── views/
+        ├── notifications/
+        ├── projects/
+        └── ...
+
+    routes/
+    ├── api.php
+    ├── console.php
+    └── web.php
+
+    tests/
+    ├── Feature/
+    │   ├── AuthenticationTest.php
+    │   ├── BoardColumnTest.php
+    │   ├── CommentTest.php
+    │   ├── NotificationTest.php
+    │   ├── ProjectTest.php
+    │   ├── TaskMoveTest.php
+    │   ├── TaskTest.php
+    │   ├── LargeDatasetSeederTest.php
+    │   ├── SendDueDateReminderJobTest.php
+    │   └── SendDueDateRemindersCommandTest.php
+    │
+    └── Unit/
+        └── ExampleTest.php
+
+    .github/
+    └── workflows/
+        └── ci.yml
 
 ## 🛣️ Main Web Routes
 
 ### Projects
 
-```http
-GET     /projects
-GET     /projects/create
-POST    /projects
-GET     /projects/{project}
-GET     /projects/{project}/edit
-PUT     /projects/{project}
-DELETE  /projects/{project}
-```
+    GET     /projects
+    GET     /projects/create
+    POST    /projects
+    GET     /projects/{project}
+    GET     /projects/{project}/edit
+    PUT     /projects/{project}
+    DELETE  /projects/{project}
 
 ### Board Columns
 
-```http
-POST    /projects/{project}/columns
-PUT     /projects/{project}/columns/{boardColumn}
-DELETE  /projects/{project}/columns/{boardColumn}
-```
+    POST    /projects/{project}/columns
+    PUT     /projects/{project}/columns/{boardColumn}
+    DELETE  /projects/{project}/columns/{boardColumn}
 
 ### Tasks
 
-```http
-POST    /projects/{project}/tasks
-PUT     /projects/{project}/tasks/{task}
-DELETE  /projects/{project}/tasks/{task}
-PATCH   /projects/{project}/tasks/{task}/move
-```
+    POST    /projects/{project}/tasks
+    PUT     /projects/{project}/tasks/{task}
+    DELETE  /projects/{project}/tasks/{task}
+    PATCH   /projects/{project}/tasks/{task}/move
 
 ### Comments
 
-```http
-POST    /tasks/{task}/comments
-DELETE  /comments/{comment}
-```
+    POST    /tasks/{task}/comments
+    DELETE  /comments/{comment}
 
 ### Notifications
 
-```http
-GET     /notifications
-POST    /notifications/{notification}/read
-```
+    GET     /notifications
+    POST    /notifications/{notification}/read
 
 ## ⚙️ Useful Artisan Commands
 
-```bash
-php artisan serve
-php artisan migrate
-php artisan migrate:fresh
-php artisan migrate:fresh --seed
-php artisan db:seed --class=LargeDatasetSeeder
-php artisan route:list
-php artisan test
-php artisan optimize:clear
-```
+    php artisan serve
+
+    php artisan migrate
+
+    php artisan migrate:fresh
+
+    php artisan migrate:fresh --seed
+
+    php artisan db:seed --class=LargeDatasetSeeder
+
+    php artisan route:list
+
+    php artisan test
+
+    php artisan optimize:clear
 
 ### Queue Commands
 
-```bash
-php artisan queue:work
-php artisan queue:work --once
-php artisan queue:failed
-php artisan queue:retry <id>
-php artisan queue:forget <id>
-```
+    php artisan queue:work
+
+    php artisan queue:work --once
+
+    php artisan queue:failed
+
+    php artisan queue:retry <id>
+
+    php artisan queue:forget <id>
 
 ### Reminder Commands
 
-```bash
-php artisan tasks:send-due-date-reminders
-php artisan schedule:list
-```
+    php artisan tasks:send-due-date-reminders
+
+    php artisan schedule:list
 
 ## 🧹 Clearing Laravel Caches
 
 If changes to routes, configuration, views, or application code are not appearing correctly:
 
-```bash
-php artisan optimize:clear
-```
+    php artisan optimize:clear
 
 ## 🗃️ Database Reset
 
 Reset the database:
 
-```bash
-php artisan migrate:fresh
-```
+    php artisan migrate:fresh
 
 Reset and seed:
 
-```bash
-php artisan migrate:fresh --seed
-```
+    php artisan migrate:fresh --seed
 
 Reset and generate the large performance dataset:
 
-```bash
-php artisan migrate:fresh
-php artisan db:seed --class=LargeDatasetSeeder
-```
+    php artisan migrate:fresh
+
+    php artisan db:seed --class=LargeDatasetSeeder
 
 ## 🔀 Git Workflow
 
@@ -1474,24 +1507,27 @@ Development is organized into feature branches.
 
 Create a feature branch:
 
-```bash
-git checkout -b feature/task8
-```
+    git checkout -b feature/task9
 
 Commit changes:
 
-```bash
-git add .
-git commit -m "your commit message"
-```
+    git add .
+
+    git commit -m "your commit message"
 
 Push the branch:
 
-```bash
-git push -u origin feature/task8
-```
+    git push -u origin feature/task9
 
 Then create a Pull Request targeting `main`.
+
+After the Pull Request is reviewed and merged:
+
+    git checkout main
+
+    git pull origin main
+
+    git branch -d feature/task9
 
 ## 📌 Development Tasks
 
@@ -1626,58 +1662,175 @@ Implemented:
 - Board performance testing
 - Performance documentation
 
+### Task 9 — Automated Test Suite & CI
+
+Implemented:
+
+- Feature test coverage audit across Tasks 1–8
+- Missing task movement activity coverage
+- Tenant isolation test coverage
+- Authorization test coverage
+- Kanban movement test coverage
+- Notification test coverage
+- API workflow test coverage
+- Unit tests for reusable position logic
+- `PositionCalculator` service
+- Shared position calculation for tasks and board columns
+- Larastan/PHPStan static analysis
+- PHPStan level 7 configuration
+- Static-analysis fixes across application code
+- Model PHPDoc/type improvements
+- Explicit type narrowing for polymorphic relationships
+- PHPStan memory configuration
+- GitHub Actions CI workflow
+- PHP 8.5 CI environment
+- Node.js frontend build in CI
+- Composer validation
+- NPM dependency installation
+- Vite production build
+- Laravel environment preparation in CI
+- Automated Pint checks
+- Automated PHPStan/Larastan checks
+- Automated Laravel/Pest test suite
+
 ## 📈 Task 8 Results
 
 ### Search & Filtering
 
 The board supports combined:
 
-```text
-Search
-+
-Assignee
-+
-Due Date Range
-+
-Board Column
-+
-Due Date Sorting
-```
+    Search
+
+    +
+
+    Assignee
+
+    +
+
+    Due Date Range
+
+    +
+
+    Board Column
+
+    +
+
+    Due Date Sorting
 
 ### Large Dataset
 
-```text
-5 companies
-50 users
-25 projects
-75 board columns
-25,000 tasks
-```
+    5 companies
+
+    50 users
+
+    25 projects
+
+    75 board columns
+
+    25,000 tasks
 
 ### N+1 Optimization
 
-```text
-Before: 28 queries
-After:   9 queries
+    Before: 28 queries
 
-Before: 20 individual assignee queries
-After:   1 eager-loading query
-```
+    After: 9 queries
+
+    Before: 20 individual assignee queries
+
+    After: 1 eager-loading query
 
 Query reduction:
 
-```text
-19 fewer queries
-≈68% reduction
-```
+    19 fewer queries
+
+    ≈68% reduction
 
 ### Board Performance
 
-```text
-1,000 tasks
-9 database queries
-251.41 ms measured board load time
-```
+    1,000 tasks
+
+    9 database queries
+
+    251.41 ms measured board load time
+
+## 📈 Task 9 Results
+
+### Test Coverage
+
+Task 9 audited the existing feature-test suite and added missing coverage for important application behavior.
+
+The suite covers:
+
+    Tenant Isolation
+    Authorization
+    Kanban Movement
+    Activity Logging
+    Notifications
+    API Authentication
+    API Workflows
+    Search & Filtering
+    Background Jobs
+    Performance
+
+### Unit Test Coverage
+
+Reusable position logic was extracted into:
+
+    app/Services/PositionCalculator.php
+
+The service is covered by unit tests for:
+
+    Initial position calculation
+
+    Incrementing positions
+
+    Position calculation after an existing maximum
+
+### Static Analysis
+
+PHPStan/Larastan was configured at:
+
+    Level 7
+
+The analysis covers:
+
+    app/
+    bootstrap/app.php
+    config/
+    database/
+    routes/
+
+Static-analysis issues identified during Task 9 were resolved across controllers, requests, resources, models, jobs, listeners, notifications, factories, routes, traits, and configuration.
+
+PHPStan is executed with:
+
+    vendor/bin/phpstan analyse --memory-limit=512M
+
+### Automated CI
+
+GitHub Actions was added at:
+
+    .github/workflows/ci.yml
+
+The CI pipeline performs:
+
+    Composer validation
+
+    Composer dependency installation
+
+    NPM dependency installation
+
+    Vite production build
+
+    Laravel environment setup
+
+    Pint formatting check
+
+    PHPStan/Larastan static analysis
+
+    Full Laravel/Pest test suite
+
+This provides an automated quality gate for pull requests and pushes.
 
 ## 🔒 Security Considerations
 
@@ -1704,86 +1857,105 @@ The `.env` file remains excluded through `.gitignore`.
 
 The following files/directories should remain ignored:
 
-```text
-.env
-/node_modules
-/vendor
-/public/build
-/storage/*.key
-```
+    .env
+
+    /node_modules
+
+    /vendor
+
+    /public/build
+
+    /storage/*.key
 
 ## 🔄 Application Workflow
 
-```text
-Create Company
-      ↓
-Register / Login
-      ↓
-Assign Role
-      ↓
-Invite Teammates
-      ↓
-Create Project
-      ↓
-Create Default Board Columns
-      ↓
-Create Tasks
-      ↓
-Search / Filter / Assign / Add Due Dates
-      ↓
-Drag & Drop Tasks
-      ↓
-Persist Movement
-      ↓
-Log Activity
-      ↓
-Add Comments
-      ↓
-Send Notifications
-      ↓
-Mark Notifications as Read
-      ↓
-Daily Reminder Scheduler
-      ↓
-Dispatch Reminder Jobs
-      ↓
-Queue Worker
-      ↓
-Due-Date Reminder Notification
-```
+    Create Company
+          ↓
+    Register / Login
+          ↓
+    Assign Role
+          ↓
+    Invite Teammates
+          ↓
+    Create Project
+          ↓
+    Create Default Board Columns
+          ↓
+    Create Tasks
+          ↓
+    Search / Filter / Assign / Add Due Dates
+          ↓
+    Drag & Drop Tasks
+          ↓
+    Persist Movement
+          ↓
+    Log Activity
+          ↓
+    Add Comments
+          ↓
+    Send Notifications
+          ↓
+    Mark Notifications as Read
+          ↓
+    Daily Reminder Scheduler
+          ↓
+    Dispatch Reminder Jobs
+          ↓
+    Queue Worker
+          ↓
+    Due-Date Reminder Notification
 
 ## 🔄 Event-Driven Architecture
 
-```text
-TaskCreated
-TaskMoved
-TaskAssigned
-CommentAdded
-      ↓
-Event Listeners
-      ↓
-Activities / Notifications
-```
+    TaskCreated
+
+    TaskMoved
+
+    TaskAssigned
+
+    CommentAdded
+          ↓
+    Event Listeners
+          ↓
+    Activities / Notifications
 
 This keeps secondary behavior such as activity logging and notifications separate from the main task operations.
 
 ## 🧵 Background Processing Architecture
 
-```text
-Laravel Scheduler
-      ↓
-Artisan Command
-      ↓
-Queue Dispatch
-      ↓
-Database Queue
-      ↓
-Queue Worker
-      ↓
-Background Job
-      ↓
-Notification
-```
+    Laravel Scheduler
+          ↓
+    Artisan Command
+          ↓
+    Queue Dispatch
+          ↓
+    Database Queue
+          ↓
+    Queue Worker
+          ↓
+    Background Job
+          ↓
+    Notification
+
+## 🤖 CI Quality Gate
+
+The project now uses automated checks to validate changes before they are merged.
+
+    Developer Push / Pull Request
+              ↓
+          GitHub Actions
+              ↓
+        Composer Validation
+              ↓
+          Pint Check
+              ↓
+     PHPStan / Larastan
+              ↓
+         Laravel Tests
+              ↓
+           CI Result
+
+This reduces the risk of merging changes that introduce formatting issues, static-analysis errors, or failing automated tests.
 
 ## 🎯 Future Improvements
 
