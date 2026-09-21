@@ -1,11 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\TaskController;
-use App\Http\Controllers\Api\V1\AuthController;
 use Illuminate\Support\Facades\Route;
-
 
 Route::prefix('v1')
     ->as('api.v1.')
@@ -16,7 +15,7 @@ Route::prefix('v1')
 
 Route::prefix('v1')
     ->as('api.v1.')
-    ->middleware('auth:sanctum', 'company.token', 'throttle:api', )
+    ->middleware(['auth:sanctum', 'company.token', 'throttle:api'])
     ->group(function () {
         Route::get('/test', function () {
             return response()->json([

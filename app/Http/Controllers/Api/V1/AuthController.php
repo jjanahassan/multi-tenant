@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\PersonalAccessToken;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -11,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function token(Request $request)
+    public function token(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email'],
@@ -19,7 +21,7 @@ class AuthController extends Controller
             'device_name' => ['required', 'string', 'max:255'],
         ]);
 
-        $user = \App\Models\User::where('email', $validated['email'])->first();
+        $user = User::where('email', $validated['email'])->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
@@ -35,7 +37,7 @@ class AuthController extends Controller
 
         $plainTextToken = Str::random(40);
 
-        $accessToken = new PersonalAccessToken();
+        $accessToken = new PersonalAccessToken;
 
         $accessToken->forceFill([
             'name' => $validated['device_name'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,13 +15,16 @@ class ProjectResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var Project $project */
+        $project = $this->resource;
+
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'description' => $this->description,
-            'company_id' => $this->company_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $project->id,
+            'name' => $project->name,
+            'description' => $project->description,
+            'company_id' => $project->company_id,
+            'created_at' => $project->created_at,
+            'updated_at' => $project->updated_at,
         ];
     }
 }

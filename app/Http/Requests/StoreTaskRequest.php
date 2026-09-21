@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Project;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Project;
 use Illuminate\Validation\Rule;
 
 class StoreTaskRequest extends FormRequest
@@ -14,9 +14,13 @@ class StoreTaskRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $project= $this->route('project');
+        $project = $this->route('project');
 
-        return $project && $this->user() && $this->user()->company_id === $project->company_id;
+        if (! $project instanceof Project) {
+            return false;
+        }
+
+        return $this->user() && $this->user()->company_id === $project->company_id;
     }
 
     /**
@@ -28,18 +32,26 @@ class StoreTaskRequest extends FormRequest
     {
         $project = $this->route('project');
 
+        $projectId = $project instanceof Project
+            ? $project->id
+            : null;
+
+        $companyId = $project instanceof Project
+            ? $project->company_id
+            : null;
+
         return [
-            'title'=> ['required', 'string', 'max:255', ],
+            'title' => ['required', 'string', 'max:255'],
 
-            'description'=> ['nullable', 'string', ],
+            'description' => ['nullable', 'string'],
 
-            'board_column_id'=> ['required', 'integer',
-            Rule::exists('board_columns', 'id')-> where('project_id', $project?->id), ],
+            'board_column_id' => ['required', 'integer',
+                Rule::exists('board_columns', 'id')->where('project_id', $projectId), ],
 
-            'assignee_id'=> ['nullable', 'integer', 
-            Rule::exists('users', 'id')-> where('company_id', $project?->company_id), ],
+            'assignee_id' => ['nullable', 'integer',
+                Rule::exists('users', 'id')->where('company_id', $companyId), ],
 
-            'due_date'=> ['nullable', 'date', ],
-        ]; 
+            'due_date' => ['nullable', 'date'],
+        ];
     }
 }

@@ -2,38 +2,42 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Project;
+use App\Models\Task;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateTaskRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         $task = $this->route('task');
 
-        if (!$task || !$this->user()) {
+        if (! $task instanceof Task || ! $this->user()) {
             return false;
         }
 
-        $project = $this->route('project') ?? $task->project;
+        $project = $this->route('project');
 
-        return $project
+        if (! $project instanceof Project) {
+            $project = $task->project;
+        }
+
+        return $project instanceof Project
             && $this->user()->company_id === $project->company_id;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    /** @return array<string, ValidationRule|array<mixed>|string> */
     public function rules(): array
     {
         $task = $this->route('task');
-        $project = $this->route('project') ?? $task?->project;
+
+        $project = $this->route('project');
+
+        if (! $project instanceof Project) {
+            $project = $task instanceof Task ? $task->project : null;
+        }
 
         return [
             'title' => [
@@ -51,14 +55,20 @@ class UpdateTaskRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('board_columns', 'id')
-                    ->where('project_id', $project?->id),
+                    ->where(
+                        'project_id',
+                        $project instanceof Project ? $project->id : null
+                    ),
             ],
 
             'assignee_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')
-                    ->where('company_id', $project?->company_id),
+                    ->where(
+                        'company_id',
+                        $project instanceof Project ? $project->company_id : null
+                    ),
             ],
 
             'due_date' => [

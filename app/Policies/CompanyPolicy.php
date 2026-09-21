@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Company;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CompanyPolicy
 {
@@ -40,7 +39,6 @@ class CompanyPolicy
         return false;
     }
 
-
     /**
      * Determine whether the user can restore the model.
      */
@@ -62,15 +60,15 @@ class CompanyPolicy
         return $user->company_id === $company->id && in_array($user->role, ['owner', 'admin']);
     }
 
-    public function removeUser(User $user, Company $company): bool 
+    public function removeUser(User $user, Company $company): bool
     {
         return $user->company_id === $company->id && in_array($user->role, ['owner', 'admin']);
- 
+
     }
 
-    public function delete(User $user, Company $company): bool 
+    public function delete(User $user, Company $company): bool
     {
         return $user->company_id === $company->id && $user->role === 'owner';
- 
+
     }
 }

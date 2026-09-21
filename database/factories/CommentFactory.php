@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\Comment;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<Comment>
@@ -17,7 +17,6 @@ class CommentFactory extends Factory
      *
      * @return array<string, mixed>
      */
-
     protected $model = Comment::class;
 
     public function definition(): array

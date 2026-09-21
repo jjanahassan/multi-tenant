@@ -179,7 +179,7 @@ test('user can retrieve unread notifications', function () {
     ]);
 
     expect($user->unreadNotifications)
-    ->toHaveCount(1)
-    ->and((string) $user->unreadNotifications->first()->id)
-    ->toBe((string) $unreadNotification->id);
+        ->toHaveCount(1)
+        ->and((string) $user->unreadNotifications->first()->id)
+        ->toBe((string) $unreadNotification->id);
 });

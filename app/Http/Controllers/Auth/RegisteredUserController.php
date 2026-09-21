@@ -12,10 +12,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    public function create()
+    public function create(): View
     {
         return view('auth.register');
     }
@@ -31,7 +32,7 @@ class RegisteredUserController extends Controller
         $user = DB::transaction(function () use ($request) {
             // 1. Create the company
             $company = Company::create([
-                'name' => $request->name . "'s Company",
+                'name' => $request->name."'s Company",
                 'owner_id' => null,
                 'is_active' => true,
             ]);
@@ -45,7 +46,7 @@ class RegisteredUserController extends Controller
             ]);
 
             // 3. Set user as company owner
-            $company->owner_id = $user->id;
+            $company->owner_id = (int) $user->id;
             $company->save();
 
             return $user;

@@ -142,7 +142,7 @@ class CompanyManagementTest extends TestCase
         ]);
     }
 
-        public function test_owner_can_delete_their_company(): void
+    public function test_owner_can_delete_their_company(): void
     {
         $company = Company::factory()->create();
 

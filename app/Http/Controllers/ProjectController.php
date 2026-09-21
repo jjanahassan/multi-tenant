@@ -3,20 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\TaskFilterRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\User;
-use App\Http\Requests\TaskFilterRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
     use AuthorizesRequests;
-    
+
     /**
      * Display a listing of projects.
      */
-    public function index()
+    public function index(): View
     {
         $this->authorize('viewAny', Project::class);
 
@@ -28,7 +29,7 @@ class ProjectController extends Controller
     /**
      * Show the form for creating a project.
      */
-    public function create()
+    public function create(): View
     {
         $this->authorize('create', Project::class);
 
@@ -38,7 +39,7 @@ class ProjectController extends Controller
     /**
      * Show the form for editing the specified project.
      */
-    public function edit(Project $project)
+    public function edit(Project $project): View
     {
         $this->authorize('update', $project);
 
@@ -48,7 +49,7 @@ class ProjectController extends Controller
     /**
      * Store a newly created project.
      */
-    public function store(StoreProjectRequest $request)
+    public function store(StoreProjectRequest $request): RedirectResponse
     {
         $project = Project::create([
             'company_id' => auth()->user()->company_id,
@@ -64,8 +65,7 @@ class ProjectController extends Controller
     /**
      * Display the specified project.
      */
-
-public function show(TaskFilterRequest $request, Project $project)
+    public function show(TaskFilterRequest $request, Project $project): View
     {
         $filters = $request->validated();
 
@@ -100,11 +100,11 @@ public function show(TaskFilterRequest $request, Project $project)
                         if ($search) {
                             $taskQuery->where(function ($query) use ($search) {
                                 $query
-                                    ->where('title', 'like', '%' . $search . '%')
+                                    ->where('title', 'like', '%'.$search.'%')
                                     ->orWhere(
                                         'description',
                                         'like',
-                                        '%' . $search . '%'
+                                        '%'.$search.'%'
                                     );
                             });
                         }
@@ -159,9 +159,9 @@ public function show(TaskFilterRequest $request, Project $project)
     public function update(
         UpdateProjectRequest $request,
         Project $project
-    ) {
+    ): RedirectResponse {
         $this->authorize('update', $project);
-        
+
         $project->update($request->validated());
 
         return redirect()
@@ -172,7 +172,7 @@ public function show(TaskFilterRequest $request, Project $project)
     /**
      * Remove the specified project.
      */
-    public function destroy(Project $project)
+    public function destroy(Project $project): RedirectResponse
     {
         $this->authorize('delete', $project);
 

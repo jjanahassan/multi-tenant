@@ -6,18 +6,23 @@ use App\Http\Requests\StoreBoardColumnRequest;
 use App\Http\Requests\UpdateBoardColumnRequest;
 use App\Models\BoardColumn;
 use App\Models\Project;
+use App\Services\PositionCalculator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
 class BoardColumnController extends Controller
 {
     use AuthorizesRequests;
-    
+
     public function store(
         StoreBoardColumnRequest $request,
         Project $project
-    ) {
-        $nextPosition = ($project->boardColumns()->max('position') ?? -1) + 1;
+    ): RedirectResponse {
+        $maxPosition = $project->boardColumns()->max('position');
+
+        $nextPosition = (new PositionCalculator)
+            ->nextPosition($maxPosition);
 
         $project->boardColumns()->create([
             'name' => $request->validated('name'),
@@ -34,7 +39,7 @@ class BoardColumnController extends Controller
         UpdateBoardColumnRequest $request,
         Project $project,
         BoardColumn $boardColumn
-    ) {
+    ): RedirectResponse {
         $boardColumn->update($request->validated());
 
         return back()->with(
@@ -46,7 +51,7 @@ class BoardColumnController extends Controller
     public function destroy(
         Project $project,
         BoardColumn $boardColumn
-    ) {
+    ): RedirectResponse {
         $this->authorize('update', $project);
 
         $boardColumn->delete();
@@ -61,7 +66,7 @@ class BoardColumnController extends Controller
         Project $project,
         BoardColumn $boardColumn,
         string $direction
-    ) {
+    ): RedirectResponse {
         abort_unless($boardColumn->project_id === $project->id, 404);
 
         $this->authorize('update', $project);

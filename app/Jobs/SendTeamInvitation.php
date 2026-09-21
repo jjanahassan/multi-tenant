@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\Invitation;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use App\Models\Invitation;
 
 class SendTeamInvitation implements ShouldQueue
 {
@@ -15,10 +15,7 @@ class SendTeamInvitation implements ShouldQueue
      */
     public function __construct(
         public Invitation $invitation
-    )
-    {
-        
-    }
+    ) {}
 
     /**
      * Execute the job.

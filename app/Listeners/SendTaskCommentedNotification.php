@@ -3,10 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\CommentAdded;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Models\Task;
 use App\Notifications\TaskCommentedNotification;
-
 
 class SendTaskCommentedNotification
 {
@@ -25,13 +23,13 @@ class SendTaskCommentedNotification
     {
         $task = $event->comment->commentable;
 
-        if (!$task) {
+        if (! $task instanceof Task) {
             return;
         }
 
         $assignee = $task->assignee;
 
-        if (!$assignee) {
+        if (! $assignee) {
             return;
         }
 

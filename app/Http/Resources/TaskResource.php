@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,17 +15,20 @@ class TaskResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var Task $task */
+        $task = $this->resource;
+
         return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'project_id' => $this->project_id,
-            'board_column_id' => $this->board_column_id,
-            'assignee_id' => $this->assignee_id,
-            'due_date' => $this->due_date?->toDateString(),
-            'position' => $this->position,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $task->id,
+            'title' => $task->title,
+            'description' => $task->description,
+            'project_id' => $task->project_id,
+            'board_column_id' => $task->board_column_id,
+            'assignee_id' => $task->assignee_id,
+            'due_date' => $task->due_date?->toDateString(),
+            'position' => $task->position,
+            'created_at' => $task->created_at,
+            'updated_at' => $task->updated_at,
         ];
     }
 }

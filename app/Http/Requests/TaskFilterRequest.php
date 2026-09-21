@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,9 +13,20 @@ class TaskFilterRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         $project = $this->route('project');
+
+        $projectId = $project instanceof Project
+            ? $project->id
+            : null;
+
+        $companyId = $project instanceof Project
+            ? $project->company_id
+            : null;
 
         return [
             'search' => [
@@ -27,7 +39,7 @@ class TaskFilterRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')
-                    ->where('company_id', $project?->company_id),
+                    ->where('company_id', $companyId),
             ],
 
             'due_from' => [
@@ -45,7 +57,7 @@ class TaskFilterRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::exists('board_columns', 'id')
-                    ->where('project_id', $project?->id),
+                    ->where('project_id', $projectId),
             ],
 
             'sort_due_date' => [

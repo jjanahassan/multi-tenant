@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Task;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -14,8 +15,11 @@ class StoreCommentRequest extends FormRequest
     {
         $task = $this->route('task');
 
-        return $task
-            && $this->user()
+        if (! $task instanceof Task) {
+            return false;
+        }
+
+        return $this->user()
             && $task->project
             && $task->project->company_id === $this->user()->company_id;
     }
@@ -28,7 +32,7 @@ class StoreCommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body'=> ['required', 'string', 'max:5000', ],
+            'body' => ['required', 'string', 'max:5000'],
         ];
     }
 }

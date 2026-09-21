@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\BoardColumn;
 use App\Models\Project;
-use App\Models\User;
+use App\Models\Task;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,13 +20,13 @@ class TaskFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id'=> Project::factory(),
-            'board_column_id'=> BoardColumn::factory(),
-            'assignee_id'=> null,
-            'title'=>fake()->sentence(3),
-            'description'=>fake()->optional()->paragraph(),
-            'due_date'=>fake()->optional()->date(),
-            'position'=>fake()->numberBetween(0,10),
+            'project_id' => Project::factory(),
+            'board_column_id' => BoardColumn::factory(),
+            'assignee_id' => null,
+            'title' => fake()->sentence(3),
+            'description' => fake()->optional()->paragraph(),
+            'due_date' => fake()->optional()->date(),
+            'position' => fake()->numberBetween(0, 10),
         ];
     }
 }

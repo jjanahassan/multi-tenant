@@ -111,7 +111,7 @@ test('user can reorder board columns', function () {
         'role' => 'admin',
     ]);
 
-   $project = Project::factory()->create([
+    $project = Project::factory()->create([
         'company_id' => $company->id,
     ]);
 
@@ -132,7 +132,6 @@ test('user can reorder board columns', function () {
             )
         )
         ->assertRedirect();
-
 
     expect($todo->fresh()->position)->toBe(2);
     expect($progress->fresh()->position)->toBe(1);

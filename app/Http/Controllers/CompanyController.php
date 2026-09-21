@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class CompanyController extends Controller
 {
-    public function users()
+    public function users(): View
     {
         $company = auth()->user()->company;
         Gate::authorize('removeUser', $company);
@@ -18,7 +20,7 @@ class CompanyController extends Controller
         return view('company.users', compact('company', 'users'));
     }
 
-     public function removeUser(Company $company, User $user)
+    public function removeUser(Company $company, User $user): RedirectResponse
     {
         Gate::authorize('removeUser', $company);
 
@@ -31,7 +33,7 @@ class CompanyController extends Controller
         return back()->with('success', 'Teammate removed successfully.');
     }
 
-    public function destroy(Company $company)
+    public function destroy(Company $company): RedirectResponse
     {
         Gate::authorize('delete', $company);
         $user = auth()->user();

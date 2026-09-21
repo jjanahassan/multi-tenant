@@ -1,13 +1,13 @@
 <?php
 
+use App\Events\CommentAdded;
+use App\Events\TaskAssigned;
+use App\Events\TaskCreated;
 use App\Models\Activity;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use App\Models\Comment;
-use App\Events\CommentAdded;
-use App\Events\TaskAssigned;
 
 test('task creation creates an activity record', function () {
     $user = User::factory()->create();
@@ -31,7 +31,7 @@ test('task creation creates an activity record', function () {
 
     $this->actingAs($user);
 
-    event(new \App\Events\TaskCreated($task, $user));
+    event(new TaskCreated($task, $user));
 
     expect(
         Activity::where('task_id', $task->id)
@@ -69,7 +69,7 @@ test('task assignment creates an activity record', function () {
 
     $this->actingAs($owner);
 
-    event(new \App\Events\TaskAssigned(
+    event(new TaskAssigned(
         $task,
         $owner,
         $assignee->id

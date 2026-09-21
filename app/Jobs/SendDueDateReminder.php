@@ -2,11 +2,12 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use App\Models\DueDateReminder;
 use App\Models\Task;
 use App\Notifications\DueDateReminderNotification;
-use App\Models\DueDateReminder;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -15,6 +16,7 @@ class SendDueDateReminder implements ShouldQueue
     use Queueable;
 
     public int $tries = 3;
+
     public int $timeout = 60;
 
     /**
@@ -22,10 +24,13 @@ class SendDueDateReminder implements ShouldQueue
      */
     public function __construct(
         public Task $task
-    )
-    {}
+    ) {}
 
-    public function backoff(): array{
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
         return [60, 300, 900];
     }
 
@@ -37,6 +42,7 @@ class SendDueDateReminder implements ShouldQueue
             'exception' => $exception?->getMessage(),
         ]);
     }
+
     /**
      * Execute the job.
      */
@@ -44,7 +50,7 @@ class SendDueDateReminder implements ShouldQueue
     {
         $this->task->load('assignee');
 
-        if (!$this->task->assignee || !$this->task->due_date) {
+        if (! $this->task->assignee || ! $this->task->due_date) {
             return;
         }
 
@@ -59,7 +65,7 @@ class SendDueDateReminder implements ShouldQueue
             return;
         }
 
-        if (!$reminder) {
+        if (! $reminder) {
             try {
                 $reminder = DueDateReminder::create([
                     'task_id' => $this->task->id,
@@ -67,7 +73,7 @@ class SendDueDateReminder implements ShouldQueue
                     'due_date' => $dueDate,
                     'sent_at' => null,
                 ]);
-            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            } catch (UniqueConstraintViolationException) {
                 $reminder = DueDateReminder::where('task_id', $this->task->id)
                     ->where('assignee_id', $this->task->assignee_id)
                     ->whereDate('due_date', $dueDate)

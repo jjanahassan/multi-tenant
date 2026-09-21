@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Auth;
+use Database\Factories\BoardColumnFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 class BoardColumn extends Model
 {
+    /** @use HasFactory<BoardColumnFactory> */
     use HasFactory;
 
-    protected $fillable= ['project_id', 'name', 'position',];
+    protected $fillable = ['project_id', 'name', 'position'];
 
     protected static function booted(): void
     {
@@ -28,12 +30,20 @@ class BoardColumn extends Model
             }
         });
     }
-    
-    public function project(): BelongsTo{
+
+    /**
+     * @return BelongsTo<Project, $this>
+     */
+    public function project(): BelongsTo
+    {
         return $this->belongsTo(Project::class);
     }
 
-    public function tasks(): HasMany{
+    /**
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
         return $this->hasMany(Task::class);
     }
 }
