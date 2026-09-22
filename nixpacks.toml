@@ -1,5 +1,17 @@
 [phases.setup]
-nixPkgs = ["php85", "php85Extensions.mbstring", "php85Extensions.pdo", "php85Extensions.pdo_pgsql", "php85Extensions.pgsql", "php85Extensions.fileinfo", "php85Extensions.tokenizer", "php85Extensions.xml", "php85Extensions.curl", "php85Extensions.bcmath", "php85Extensions.intl"]
+nixPkgs = [
+    "php85",
+    "php85Extensions.mbstring",
+    "php85Extensions.pdo",
+    "php85Extensions.pdo_pgsql",
+    "php85Extensions.pgsql",
+    "php85Extensions.fileinfo",
+    "php85Extensions.tokenizer",
+    "php85Extensions.xml",
+    "php85Extensions.curl",
+    "php85Extensions.bcmath",
+    "php85Extensions.intl"
+]
 
 [phases.build]
 cmds = [
