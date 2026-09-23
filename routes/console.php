@@ -9,4 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('tasks:send-due-date-reminders')
-    ->daily();
+    ->dailyAt('9:00');
