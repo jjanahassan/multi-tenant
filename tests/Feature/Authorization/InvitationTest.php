@@ -1,134 +1,175 @@
+
 <?php
 
-use App\Jobs\SendTeamInvitation;
 use App\Models\Company;
-use App\Models\Invitation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
-test('owner can create a teammate invitation', function () {
-    Queue::fake();
-
-    $company = Company::create([
+function createCompanyForInvitationTest(): Company
+{
+    return Company::create([
         'name' => 'Company A',
         'owner_id' => null,
         'is_active' => true,
     ]);
+}
 
-    $owner = User::factory()->create([
+function createUserForInvitationTest(
+    Company $company,
+    string $role
+): User {
+    $user = User::factory()->create([
         'company_id' => $company->id,
-        'role' => 'owner',
+        'role' => $role,
     ]);
 
-    $this->actingAs($owner);
+    if ($role === 'owner') {
+        $company->update(['owner_id' => $user->id]);
+    }
 
-    $response = $this->post(route('invitations.store'), [
+    return $user;
+}
+
+test('owner can create a member account', function () {
+    $company = createCompanyForInvitationTest();
+    $owner = createUserForInvitationTest($company, 'owner');
+
+    $response = $this->actingAs($owner)->post(route('invitations.store'), [
+        'name' => 'New Member',
         'email' => 'newmember@example.com',
         'role' => 'member',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
+    $response->assertSessionHasNoErrors();
     $response->assertSessionHas('success');
 
-    $this->assertDatabaseHas('invitations', [
-        'company_id' => $company->id,
+    $this->assertDatabaseHas('users', [
+        'name' => 'New Member',
         'email' => 'newmember@example.com',
-        'role' => 'member',
-    ]);
-
-    Queue::assertPushed(SendTeamInvitation::class);
-});
-
-test('admin can create a teammate invitation', function () {
-    Queue::fake();
-
-    $company = Company::create([
-        'name' => 'Company A',
-        'owner_id' => null,
-        'is_active' => true,
-    ]);
-
-    $admin = User::factory()->create([
-        'company_id' => $company->id,
-        'role' => 'admin',
-    ]);
-
-    $this->actingAs($admin);
-
-    $response = $this->post(route('invitations.store'), [
-        'email' => 'newmember@example.com',
-        'role' => 'member',
-    ]);
-
-    $response->assertSessionHas('success');
-
-    $this->assertDatabaseHas('invitations', [
-        'company_id' => $company->id,
-        'email' => 'newmember@example.com',
-        'role' => 'member',
-    ]);
-
-    Queue::assertPushed(SendTeamInvitation::class);
-});
-
-test('member cannot create a teammate invitation', function () {
-    $company = Company::create([
-        'name' => 'Company A',
-        'owner_id' => null,
-        'is_active' => true,
-    ]);
-
-    $member = User::factory()->create([
         'company_id' => $company->id,
         'role' => 'member',
     ]);
 
-    $this->actingAs($member);
+    $newUser = User::where('email', 'newmember@example.com')->firstOrFail();
 
-    $response = $this->post(route('invitations.store'), [
-        'email' => 'newmember@example.com',
-        'role' => 'member',
-    ]);
-
-    $response->assertForbidden();
+    expect(Hash::check('Password123!', $newUser->password))->toBeTrue();
 
     $this->assertDatabaseCount('invitations', 0);
 });
 
-test('invitation role cannot be owner', function () {
-    $company = Company::create([
-        'name' => 'Company A',
-        'owner_id' => null,
-        'is_active' => true,
+test('admin can create a member account', function () {
+    $company = createCompanyForInvitationTest();
+    $admin = createUserForInvitationTest($company, 'admin');
+
+    $response = $this->actingAs($admin)->post(route('invitations.store'), [
+        'name' => 'New Member',
+        'email' => 'newmember@example.com',
+        'role' => 'member',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
-    $owner = User::factory()->create([
+    $response->assertSessionHasNoErrors();
+    $response->assertSessionHas('success');
+
+    $this->assertDatabaseHas('users', [
+        'name' => 'New Member',
+        'email' => 'newmember@example.com',
         'company_id' => $company->id,
-        'role' => 'owner',
+        'role' => 'member',
     ]);
 
-    $this->actingAs($owner);
+    $this->assertDatabaseCount('invitations', 0);
+});
 
-    $response = $this->post(route('invitations.store'), [
-        'email' => 'newowner@example.com',
-        'role' => 'owner',
+test('owner can create an admin account', function () {
+    $company = createCompanyForInvitationTest();
+    $owner = createUserForInvitationTest($company, 'owner');
+
+    $response = $this->actingAs($owner)->post(route('invitations.store'), [
+        'name' => 'New Admin',
+        'email' => 'newadmin@example.com',
+        'role' => 'admin',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+    ]);
+
+    $response->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('users', [
+        'name' => 'New Admin',
+        'email' => 'newadmin@example.com',
+        'company_id' => $company->id,
+        'role' => 'admin',
+    ]);
+});
+
+test('admin cannot create an admin account', function () {
+    $company = createCompanyForInvitationTest();
+    $admin = createUserForInvitationTest($company, 'admin');
+
+    $response = $this->actingAs($admin)->post(route('invitations.store'), [
+        'name' => 'Another Admin',
+        'email' => 'anotheradmin@example.com',
+        'role' => 'admin',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $response->assertSessionHasErrors('role');
 
+    $this->assertDatabaseMissing('users', [
+        'email' => 'anotheradmin@example.com',
+    ]);
+});
+
+test('member cannot create a teammate account', function () {
+    $company = createCompanyForInvitationTest();
+    $member = createUserForInvitationTest($company, 'member');
+
+    $response = $this->actingAs($member)->post(route('invitations.store'), [
+        'name' => 'Another Member',
+        'email' => 'anothermember@example.com',
+        'role' => 'member',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+    ]);
+
+    $response->assertForbidden();
+
+    $this->assertDatabaseMissing('users', [
+        'email' => 'anothermember@example.com',
+    ]);
+
     $this->assertDatabaseCount('invitations', 0);
 });
 
-test('invitation always belongs to the authenticated users company', function () {
-    Queue::fake();
+test('owner cannot create an account with the owner role', function () {
+    $company = createCompanyForInvitationTest();
+    $owner = createUserForInvitationTest($company, 'owner');
 
-    $companyA = Company::create([
-        'name' => 'Company A',
-        'owner_id' => null,
-        'is_active' => true,
+    $response = $this->actingAs($owner)->post(route('invitations.store'), [
+        'name' => 'Another Owner',
+        'email' => 'anotherowner@example.com',
+        'role' => 'owner',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
+
+    $response->assertSessionHasErrors('role');
+
+    $this->assertDatabaseMissing('users', [
+        'email' => 'anotherowner@example.com',
+    ]);
+});
+
+test('new teammate account always belongs to the authenticated users company', function () {
+    $companyA = createCompanyForInvitationTest();
 
     $companyB = Company::create([
         'name' => 'Company B',
@@ -136,50 +177,56 @@ test('invitation always belongs to the authenticated users company', function ()
         'is_active' => true,
     ]);
 
-    $ownerA = User::factory()->create([
-        'company_id' => $companyA->id,
-        'role' => 'owner',
+    $ownerA = createUserForInvitationTest($companyA, 'owner');
+
+    $response = $this->actingAs($ownerA)->post(route('invitations.store'), [
+        'name' => 'Company A Member',
+        'email' => 'companyamember@example.com',
+        'role' => 'member',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
-    $this->actingAs($ownerA);
+    $response->assertSessionHasNoErrors();
 
-    $this->post(route('invitations.store'), [
-        'email' => 'test@example.com',
+    $newUser = User::where('email', 'companyamember@example.com')->firstOrFail();
+
+    expect($newUser->company_id)->toBe($companyA->id);
+    expect($newUser->company_id)->not->toBe($companyB->id);
+});
+
+test('account creation requires a unique email and matching passwords', function () {
+    $company = createCompanyForInvitationTest();
+    $owner = createUserForInvitationTest($company, 'owner');
+
+    User::factory()->create([
+        'company_id' => $company->id,
+        'email' => 'existing@example.com',
+    ]);
+
+    $response = $this->actingAs($owner)->post(route('invitations.store'), [
+        'name' => 'New Member',
+        'email' => 'existing@example.com',
+        'role' => 'member',
+        'password' => 'Password123!',
+        'password_confirmation' => 'DifferentPassword123!',
+    ]);
+
+    $response->assertSessionHasErrors(['email', 'password']);
+});
+
+test('account creation requires a name and password', function () {
+    $company = createCompanyForInvitationTest();
+    $owner = createUserForInvitationTest($company, 'owner');
+
+    $response = $this->actingAs($owner)->post(route('invitations.store'), [
+        'email' => 'incomplete@example.com',
         'role' => 'member',
     ]);
 
-    $invitation = Invitation::first();
+    $response->assertSessionHasErrors(['name', 'password']);
 
-    expect($invitation->company_id)->toBe($companyA->id);
-    expect($invitation->company_id)->not->toBe($companyB->id);
-});
-
-test('user can only query invitations from their company', function () {
-    $companyA = Company::factory()->create();
-    $companyB = Company::factory()->create();
-
-    $userA = User::factory()->create([
-        'company_id' => $companyA->id,
-        'role' => 'owner',
+    $this->assertDatabaseMissing('users', [
+        'email' => 'incomplete@example.com',
     ]);
-
-    $invitationA = Invitation::factory()->create([
-        'company_id' => $companyA->id,
-    ]);
-
-    $invitationB = Invitation::factory()->create([
-        'company_id' => $companyB->id,
-    ]);
-
-    $this->actingAs($userA);
-
-    $invitations = Invitation::all();
-
-    $this->assertTrue(
-        $invitations->contains('id', $invitationA->id)
-    );
-
-    $this->assertFalse(
-        $invitations->contains('id', $invitationB->id)
-    );
 });
