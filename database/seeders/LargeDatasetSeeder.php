@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class LargeDatasetSeeder extends Seeder
 {
@@ -17,21 +18,47 @@ class LargeDatasetSeeder extends Seeder
         $projectsPerCompany = 5;
         $tasksPerProject = 1000;
 
+        // 12 characters. Hashed once so bcrypt only runs one time.
+        $password = Hash::make('Password123!');
+
         for ($companyIndex = 1; $companyIndex <= $companies; $companyIndex++) {
             $company = Company::factory()->create();
 
-            $users = User::factory()
-                ->count($usersPerCompany)
+            // Known accounts, all in the same company
+            $owner = User::factory()->create([
+                'company_id' => $company->id,
+                'name' => "Owner {$companyIndex}",
+                'email' => "owner{$companyIndex}@example.com",
+                'password' => $password,
+                'role' => 'owner',
+            ]);
+
+            $admin = User::factory()->create([
+                'company_id' => $company->id,
+                'name' => "Admin {$companyIndex}",
+                'email' => "admin{$companyIndex}@example.com",
+                'password' => $password,
+                'role' => 'admin',
+            ]);
+
+            $member = User::factory()->create([
+                'company_id' => $company->id,
+                'name' => "Member {$companyIndex}",
+                'email' => "member{$companyIndex}@example.com",
+                'password' => $password,
+                'role' => 'member',
+            ]);
+
+            // Remaining random members
+            $randomUsers = User::factory()
+                ->count($usersPerCompany - 3)
                 ->create([
                     'company_id' => $company->id,
+                    'password' => $password,
                     'role' => 'member',
                 ]);
 
-            $owner = $users->first();
-
-            $owner->update([
-                'role' => 'owner',
-            ]);
+            $users = $randomUsers->push($owner, $admin, $member);
 
             $company->update([
                 'owner_id' => $owner->id,
